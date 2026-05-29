@@ -1,0 +1,40 @@
+{
+  "name": "hr-operations-management-backend",
+  "version": "1.0.0",
+  "description": "Node.js MVC backend for the HR and Operations Management System PostgreSQL schema.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:check": "node scripts/db-check.js",
+    "db:ensure": "node scripts/ensure-database.js",
+    "postman:generate": "node scripts/generate-postman.js",
+    "migrate": "node scripts/migrate.js",
+    "test:smoke": "node scripts/smoke-test.js",
+    "check": "node scripts/check-syntax.js"
+  },
+  "keywords": [
+    "hr",
+    "operations",
+    "postgresql",
+    "express",
+    "mvc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^2.1.1",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
