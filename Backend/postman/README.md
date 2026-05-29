@@ -11,13 +11,15 @@ Select the `HR Operations Local` environment before sending requests.
 
 1. `00 Health & Auth / Health Check`
 2. `00 Health & Auth / Register First Admin`
-3. `00 Health & Auth / Login`
+3. `00 Health & Auth / Login Bootstrap Admin`
 4. `01 Metadata / List API Resources`
 5. `02 Test Data Setup`
 6. `11 Business Workflows`
 7. Schema folders as needed
 
-The `Login` request stores `authToken` automatically. The setup requests store IDs such as `employeeId`, `officeId`, `assetId`, `leaveRequestId`, and `payrollRunId`, which the workflow requests reuse.
+The login requests store `authToken` automatically. The setup requests store IDs such as `employeeId`, `officeId`, `assetId`, `leaveRequestId`, and `payrollRunId`, which the workflow requests reuse.
+
+For normal users, set `employeeEmail` in the environment, run `02 Test Data Setup / Create Employee`, then run `00 Health & Auth / Signup With Employee Email`. For Google login, set `GOOGLE_CLIENT_ID` in `.env`, paste a Google ID token into the `googleIdToken` environment variable, and run `00 Health & Auth / Login With Google ID Token`.
 
 ## Folder Layout
 

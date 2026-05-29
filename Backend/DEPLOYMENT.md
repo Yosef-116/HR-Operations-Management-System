@@ -12,12 +12,30 @@ DB_SSL=true
 JWT_SECRET=use-a-long-random-secret
 JWT_EXPIRES_IN=8h
 BCRYPT_ROUNDS=10
+GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com
+GOOGLE_AUTO_CREATE_ACCOUNTS=true
 CORS_ORIGIN=https://your-frontend-domain.com
 AUTH_REQUIRED=true
 UPLOAD_DIR=uploads
 ```
 
 Use `DATABASE_URL` for hosted PostgreSQL. The separate `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` values are mainly for local development.
+
+## Google Sign-In
+
+Create a Google Cloud OAuth client with type `Web application`, then set its client ID in `GOOGLE_CLIENT_ID`. The backend expects the frontend or Postman to send a Google ID token to:
+
+```text
+POST /api/v1/auth/google
+```
+
+```json
+{
+  "idToken": "GOOGLE_ID_TOKEN"
+}
+```
+
+The Google email must be verified and must already exist on an active `org.employee` record.
 
 ## Deploy Steps
 

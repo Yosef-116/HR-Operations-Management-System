@@ -19,8 +19,35 @@ const register = asyncHandler(async (req, res) => {
   });
 });
 
+const signup = asyncHandler(async (req, res) => {
+  const userCount = await authService.getUserCount();
+  const canAssignRoles = userCount === 0 || hasAnyPermission(req.user, ['manage_all']);
+
+  const result = await authService.signupWithEmployeeEmail({
+    email: req.body.email,
+    password: req.body.password,
+    role_names: canAssignRoles ? (req.body.role_names || []) : []
+  });
+
+  res.status(201).json({
+    success: true,
+    data: result
+  });
+});
+
 const login = asyncHandler(async (req, res) => {
   const result = await authService.login(req.body);
+  res.json({
+    success: true,
+    data: result
+  });
+});
+
+const google = asyncHandler(async (req, res) => {
+  const result = await authService.loginWithGoogle({
+    idToken: req.body.idToken || req.body.credential
+  });
+
   res.json({
     success: true,
     data: result
@@ -37,6 +64,8 @@ const me = asyncHandler(async (req, res) => {
 
 module.exports = {
   register,
+  signup,
   login,
+  google,
   me
 };

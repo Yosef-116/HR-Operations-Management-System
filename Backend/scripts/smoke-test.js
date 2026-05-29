@@ -55,6 +55,33 @@ const main = async () => {
     const token = auth.data.token;
     await request(baseUrl, 'GET', '/api/v1/resources', { token });
 
+    const employeeEmail = `postman.employee.${Date.now()}@example.com`;
+    const employeePassword = 'EmployeePass123!';
+    const createdEmployee = await request(baseUrl, 'POST', '/api/v1/data/org/employee', {
+      token,
+      body: {
+        f_name: 'Postman',
+        l_name: 'Employee',
+        email: employeeEmail,
+        hire_date: '2026-06-01',
+        employment_status: 'Active'
+      }
+    });
+
+    const employeeSignup = await request(baseUrl, 'POST', '/api/v1/auth/signup', {
+      body: {
+        email: employeeEmail,
+        password: employeePassword
+      }
+    });
+
+    await request(baseUrl, 'POST', '/api/v1/auth/login', {
+      body: {
+        email: employeeEmail,
+        password: employeePassword
+      }
+    });
+
     const createdOffice = await request(baseUrl, 'POST', '/api/v1/data/org/offices', {
       token,
       body: {
@@ -82,6 +109,7 @@ const main = async () => {
     });
 
     await request(baseUrl, 'DELETE', `/api/v1/data/org/offices/${officeId}`, { token });
+    await request(baseUrl, 'DELETE', `/api/v1/data/org/employee/${createdEmployee.data.employee_id}`, { token });
 
     console.log(`Smoke test passed against ${baseUrl}`);
   } finally {

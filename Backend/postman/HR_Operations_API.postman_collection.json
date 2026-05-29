@@ -90,7 +90,93 @@
           ]
         },
         {
-          "name": "Login",
+          "name": "Signup With Employee Email",
+          "description": "The email must already exist in org.employee and the employee must be Active.",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeEmail}}\",\n  \"password\": \"{{employeePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/signup"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('employee signup created account or already exists', function () {",
+                  "  pm.expect([201, 409]).to.include(pm.response.code);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.environment.set('authToken', json.data.token);",
+                  "  pm.environment.set('userId', json.data.user.user_id);",
+                  "  if (json.data.user.employee_id) pm.environment.set('employeeId', json.data.user.employee_id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login With Email Or Username",
+          "description": "Use email/password for employee accounts. You can also replace email with username for bootstrap admin login.",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{employeeEmail}}\",\n  \"password\": \"{{employeePassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeded', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('authToken', json.data.token);",
+                  "pm.environment.set('userId', json.data.user.user_id);",
+                  "if (json.data.user.employee_id) pm.environment.set('employeeId', json.data.user.employee_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login Bootstrap Admin",
           "request": {
             "auth": {
               "type": "noauth"
@@ -119,7 +205,47 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('login succeeded', function () { pm.response.to.have.status(200); });",
+                  "pm.test('admin login succeeded', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('authToken', json.data.token);",
+                  "pm.environment.set('userId', json.data.user.user_id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login With Google ID Token",
+          "description": "Paste a Google Sign-In ID token for an employee email that already exists in org.employee. GOOGLE_CLIENT_ID must be set in .env.",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"{{googleIdToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/v1/auth/google"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('google login succeeded', function () { pm.response.to.have.status(200); });",
                   "const json = pm.response.json();",
                   "pm.environment.set('authToken', json.data.token);",
                   "pm.environment.set('userId', json.data.user.user_id);",
@@ -328,7 +454,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"f_name\": \"Postman\",\n  \"l_name\": \"Employee\",\n  \"email\": \"employee+{{$timestamp}}@example.com\",\n  \"gender\": \"Other\",\n  \"birth_date\": \"1996-01-01\",\n  \"national_id\": \"NID-{{$timestamp}}\",\n  \"nationality\": \"Ethiopian\",\n  \"hire_date\": \"2026-06-01\",\n  \"employment_status\": \"Active\",\n  \"dept_id\": \"{{deptId}}\",\n  \"job_id\": \"{{jobId}}\",\n  \"office_id\": \"{{officeId}}\"\n}",
+              "raw": "{\n  \"f_name\": \"Postman\",\n  \"l_name\": \"Employee\",\n  \"email\": \"{{employeeEmail}}\",\n  \"gender\": \"Other\",\n  \"birth_date\": \"1996-01-01\",\n  \"national_id\": \"NID-{{$timestamp}}\",\n  \"nationality\": \"Ethiopian\",\n  \"hire_date\": \"2026-06-01\",\n  \"employment_status\": \"Active\",\n  \"dept_id\": \"{{deptId}}\",\n  \"job_id\": \"{{jobId}}\",\n  \"office_id\": \"{{officeId}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"

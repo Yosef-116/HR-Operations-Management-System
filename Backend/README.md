@@ -46,7 +46,9 @@ uploads/        local document uploads
 
 - `GET /health`
 - `POST /api/v1/auth/register`
+- `POST /api/v1/auth/signup`
 - `POST /api/v1/auth/login`
+- `POST /api/v1/auth/google`
 - `GET /api/v1/auth/me`
 - `GET /api/v1/resources`
 - `GET /api/v1/data/:schema/:table`
@@ -56,6 +58,20 @@ uploads/        local document uploads
 - `DELETE /api/v1/data/:schema/:table/:id`
 
 Composite-key tables can be updated or deleted by passing primary-key fields in the query string or in a `where` object in the JSON body.
+
+## Authentication
+
+Use `POST /api/v1/auth/signup` for normal users. The submitted `email` must already exist in `org.employee.email`, and the employee must have `employment_status = 'Active'`. The created auth username becomes the employee email, so `POST /api/v1/auth/login` accepts either `{ "email": "...", "password": "..." }` or the older `{ "username": "...", "password": "..." }` format.
+
+Google login uses `POST /api/v1/auth/google` with a Google ID token:
+
+```json
+{
+  "idToken": "GOOGLE_ID_TOKEN_FROM_FRONTEND"
+}
+```
+
+Set `GOOGLE_CLIENT_ID` in `.env` to the Web application OAuth client ID from Google Cloud. The Google email must be verified and must match an existing active employee email.
 
 ## Workflow Endpoints
 

@@ -85,6 +85,9 @@ const environmentVariables = new Set([
   'baseUrl',
   'adminUsername',
   'adminPassword',
+  'employeeEmail',
+  'employeePassword',
+  'googleIdToken',
   'authToken',
   'officeId',
   'deptId',
@@ -461,7 +464,7 @@ const setupFolder = () => ({
       body: {
         f_name: 'Postman',
         l_name: 'Employee',
-        email: 'employee+{{$timestamp}}@example.com',
+        email: '{{employeeEmail}}',
         gender: 'Other',
         birth_date: '1996-01-01',
         national_id: 'NID-{{$timestamp}}',
@@ -691,18 +694,66 @@ const authFolder = () => ({
       description: 'Run this only on a fresh database. If the admin already exists, run Login next.'
     }),
     request({
-      name: 'Login',
+      name: 'Signup With Employee Email',
+      method: 'POST',
+      url: urlFor('/api/v1/auth/signup'),
+      auth: { type: 'noauth' },
+      body: { email: '{{employeeEmail}}', password: '{{employeePassword}}' },
+      events: testEvent([
+        "pm.test('employee signup created account or already exists', function () {",
+        '  pm.expect([201, 409]).to.include(pm.response.code);',
+        '});',
+        'if (pm.response.code === 201) {',
+        '  const json = pm.response.json();',
+        "  pm.environment.set('authToken', json.data.token);",
+        "  pm.environment.set('userId', json.data.user.user_id);",
+        "  if (json.data.user.employee_id) pm.environment.set('employeeId', json.data.user.employee_id);",
+        '}'
+      ]),
+      description: 'The email must already exist in org.employee and the employee must be Active.'
+    }),
+    request({
+      name: 'Login With Email Or Username',
       method: 'POST',
       url: urlFor('/api/v1/auth/login'),
       auth: { type: 'noauth' },
-      body: { username: '{{adminUsername}}', password: '{{adminPassword}}' },
+      body: { email: '{{employeeEmail}}', password: '{{employeePassword}}' },
       events: testEvent([
         "pm.test('login succeeded', function () { pm.response.to.have.status(200); });",
         'const json = pm.response.json();',
         "pm.environment.set('authToken', json.data.token);",
         "pm.environment.set('userId', json.data.user.user_id);",
         "if (json.data.user.employee_id) pm.environment.set('employeeId', json.data.user.employee_id);"
+      ]),
+      description: 'Use email/password for employee accounts. You can also replace email with username for bootstrap admin login.'
+    }),
+    request({
+      name: 'Login Bootstrap Admin',
+      method: 'POST',
+      url: urlFor('/api/v1/auth/login'),
+      auth: { type: 'noauth' },
+      body: { username: '{{adminUsername}}', password: '{{adminPassword}}' },
+      events: testEvent([
+        "pm.test('admin login succeeded', function () { pm.response.to.have.status(200); });",
+        'const json = pm.response.json();',
+        "pm.environment.set('authToken', json.data.token);",
+        "pm.environment.set('userId', json.data.user.user_id);"
       ])
+    }),
+    request({
+      name: 'Login With Google ID Token',
+      method: 'POST',
+      url: urlFor('/api/v1/auth/google'),
+      auth: { type: 'noauth' },
+      body: { idToken: '{{googleIdToken}}' },
+      events: testEvent([
+        "pm.test('google login succeeded', function () { pm.response.to.have.status(200); });",
+        'const json = pm.response.json();',
+        "pm.environment.set('authToken', json.data.token);",
+        "pm.environment.set('userId', json.data.user.user_id);",
+        "if (json.data.user.employee_id) pm.environment.set('employeeId', json.data.user.employee_id);"
+      ]),
+      description: 'Paste a Google Sign-In ID token for an employee email that already exists in org.employee. GOOGLE_CLIENT_ID must be set in .env.'
     }),
     request({
       name: 'Current User',
@@ -996,8 +1047,10 @@ const environment = {
     value: key === 'baseUrl' ? 'http://localhost:5000'
       : key === 'adminUsername' ? 'admin'
         : key === 'adminPassword' ? 'AdminPass123!'
+          : key === 'employeeEmail' ? 'employee@example.com'
+            : key === 'employeePassword' ? 'EmployeePass123!'
           : '',
-    type: ['adminPassword', 'authToken'].includes(key) ? 'secret' : 'default',
+    type: ['adminPassword', 'employeePassword', 'authToken', 'googleIdToken'].includes(key) ? 'secret' : 'default',
     enabled: true
   })),
   _postman_variable_scope: 'environment',

@@ -11,6 +11,11 @@ const list = (value) => {
   return value.split(',').map((item) => item.trim()).filter(Boolean);
 };
 
+const csvList = (value) => {
+  if (!value) return [];
+  return value.split(',').map((item) => item.trim()).filter(Boolean);
+};
+
 const number = (value, fallback) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -29,6 +34,8 @@ const config = {
   jwtSecret: process.env.JWT_SECRET || 'development-only-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
   bcryptRounds: number(process.env.BCRYPT_ROUNDS, 10),
+  googleClientIds: csvList(process.env.GOOGLE_CLIENT_IDS || process.env.GOOGLE_CLIENT_ID || ''),
+  googleAutoCreateAccounts: process.env.GOOGLE_AUTO_CREATE_ACCOUNTS === undefined ? true : bool(process.env.GOOGLE_AUTO_CREATE_ACCOUNTS, true),
   corsOrigin: list(process.env.CORS_ORIGIN || '*'),
   authRequired: process.env.AUTH_REQUIRED === undefined ? true : bool(process.env.AUTH_REQUIRED, true),
   uploadDir: path.resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads')
