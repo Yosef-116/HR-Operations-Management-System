@@ -90,26 +90,53 @@ const parseResources = (sql) => {
   return resources;
 };
 
-const readResources = () => {
-  if (!fs.existsSync(schemaSqlPath)) {
-    throw new Error(`Schema SQL file not found at ${schemaSqlPath}`);
-  }
-  return parseResources(fs.readFileSync(schemaSqlPath, 'utf8'));
-};
+// FIX: The original code called readResources() at the top level, so a missing
+// SQL file threw an unhandled error at require() time — crashing the process
+// with a confusing stack trace before the server even started.
+//
+// The fix uses lazy initialisation: resources are loaded on the first call to
+// getResource() or accessing resourceList/resources. If the file is missing,
+// the error is thrown with a clear message that names the missing path and
+// suggests running migrations.
+let _resources = null;
 
-const resources = readResources();
-const resourceList = Object.values(resources);
+const loadResources = () => {
+  if (_resources) return _resources;
+
+  if (!fs.existsSync(schemaSqlPath)) {
+    throw new Error(
+      `Schema SQL file not found at:\n  ${schemaSqlPath}\n\n` +
+      'Run "npm run migrate" to generate the schema file, then restart the server.'
+    );
+  }
+
+  _resources = parseResources(fs.readFileSync(schemaSqlPath, 'utf8'));
+  return _resources;
+};
 
 const getResource = (schema, table) => {
-  const resource = resources[`${schema}.${table}`];
-  if (!resource) return null;
-  return resource;
+  const all = loadResources();
+  return all[`${schema}.${table}`] || null;
 };
 
-module.exports = {
-  schemaSqlPath,
-  resources,
-  resourceList,
-  getResource,
-  parseResources
-};
+// Lazy proxy — iterating resourceList triggers the load on first use
+const resourceListProxy = new Proxy([], {
+  get(_, prop) {
+    return Object.values(loadResources())[prop];
+  }
+});
+
+// For callers that destructure { resources, resourceList }
+Object.defineProperty(module.exports, 'resources', {
+  get: () => loadResources(),
+  enumerable: true
+});
+
+Object.defineProperty(module.exports, 'resourceList', {
+  get: () => Object.values(loadResources()),
+  enumerable: true
+});
+
+module.exports.schemaSqlPath = schemaSqlPath;
+module.exports.getResource = getResource;
+module.exports.parseResources = parseResources;

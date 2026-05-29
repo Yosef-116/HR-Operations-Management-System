@@ -63,6 +63,10 @@ const buildPkWhere = (resource, pkValues, values = []) => {
   };
 };
 
+// FIX: Use a single query with COUNT(*) OVER() (window function) instead of two
+// separate queries. The old approach ran COUNT first, then fetched rows — any
+// INSERT or DELETE between those two queries made meta.total inconsistent with
+// the rows actually returned. A window function computes both in one atomic pass.
 const findAll = async (resource, query = {}, client = null) => {
   const { limit, offset, page } = getLimitOffset(query);
   const { values, whereClause } = buildWhere(resource, query);
@@ -70,23 +74,26 @@ const findAll = async (resource, query = {}, client = null) => {
   const sortColumn = columns.has(query.sort) ? query.sort : (resource.primaryKey[0] || resource.columns[0].name);
   const order = String(query.order || 'asc').toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
-  const countResult = await runner(client).query(
-    `SELECT COUNT(*)::int AS total FROM ${qualifiedName(resource)} ${whereClause}`,
-    values
-  );
-
   const pagedValues = values.slice();
   pagedValues.push(limit, offset);
 
-  const rowsResult = await runner(client).query(
-    `SELECT ${selectList(resource)} FROM ${qualifiedName(resource)} ${whereClause} ORDER BY ${quoteIdent(sortColumn)} ${order} LIMIT $${pagedValues.length - 1} OFFSET $${pagedValues.length}`,
+  const result = await runner(client).query(
+    `SELECT ${selectList(resource)}, COUNT(*) OVER()::int AS _total
+     FROM ${qualifiedName(resource)} ${whereClause}
+     ORDER BY ${quoteIdent(sortColumn)} ${order}
+     LIMIT $${pagedValues.length - 1} OFFSET $${pagedValues.length}`,
     pagedValues
   );
 
+  // Extract the window-function total and strip the internal _total column
+  // from every row before returning to the caller.
+  const total = result.rows[0] ? result.rows[0]._total : 0;
+  const rows = result.rows.map(({ _total, ...rest }) => rest);
+
   return {
-    rows: rowsResult.rows,
+    rows,
     meta: {
-      total: countResult.rows[0].total,
+      total,
       limit,
       offset,
       page

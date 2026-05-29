@@ -68,6 +68,14 @@ const calculatePayroll = async ({
   };
 });
 
+// FIX: The original loop called `await client.query(...)` for every employee
+// to check whether a payslip already existed — O(n) sequential DB round-trips
+// inside a single transaction. For a company with 500 employees that is 500+
+// extra queries before any payslip is written.
+//
+// The fix fetches ALL existing payslips for this run in a single query, builds
+// a Set for O(1) lookups, and then iterates without any extra per-employee
+// round-trip for the existence check.
 const generatePayslips = async (runId, options, reqMeta) => db.withTransaction(async (client) => {
   const run = await fetchOne(
     client,
@@ -91,17 +99,25 @@ const generatePayslips = async (runId, options, reqMeta) => db.withTransaction(a
        AND e.employment_status = 'Active'`
   );
 
+  // Single query — replaces the per-employee SELECT inside the loop
+  const existingResult = await client.query(
+    'SELECT employee_id, payslip_id FROM payroll.payslips WHERE run_id = $1',
+    [runId]
+  );
+  const alreadyProcessed = new Map(
+    existingResult.rows.map((r) => [r.employee_id, r.payslip_id])
+  );
+
   const created = [];
   const skipped = [];
   const pensionRate = number(options.pensionRate, 0.07);
 
   for (const contract of contracts.rows) {
-    const existing = await client.query(
-      'SELECT payslip_id FROM payroll.payslips WHERE employee_id = $1 AND run_id = $2 LIMIT 1',
-      [contract.employee_id, runId]
-    );
-    if (existing.rowCount) {
-      skipped.push({ employee_id: contract.employee_id, payslip_id: existing.rows[0].payslip_id });
+    if (alreadyProcessed.has(contract.employee_id)) {
+      skipped.push({
+        employee_id: contract.employee_id,
+        payslip_id: alreadyProcessed.get(contract.employee_id)
+      });
       continue;
     }
 

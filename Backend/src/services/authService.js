@@ -9,6 +9,10 @@ const AppError = require('../utils/AppError');
 
 const googleClient = new OAuth2Client();
 
+// Used for timing-safe login: always run bcrypt even when the user is not found,
+// so response time does not reveal whether a username/email exists.
+const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ012345';
+
 const publicUserFields = `
   ua.user_id,
   ua.employee_id,
@@ -247,6 +251,11 @@ const signupWithEmployeeEmail = async ({ email, password, role_names = [] }) => 
   });
 };
 
+// FIX 1: Query checks BOTH ua.username AND e.email so users can log in with
+//         either their username or their employee email address.
+// FIX 2: Always call bcrypt.compare — even when no user is found — so that
+//         a missing account takes the same time as a wrong password, preventing
+//         user-enumeration via response-timing attacks.
 const login = async ({ username, email, password }) => {
   const loginId = normalizeEmail(email || username);
   if (!loginId || !password) {
@@ -257,13 +266,19 @@ const login = async ({ username, email, password }) => {
     `SELECT ua.user_id, ua.username, ua.password_hash, ua.is_active, e.employment_status
      FROM auth.user_accounts ua
      LEFT JOIN org.employee e ON e.employee_id = ua.employee_id
-     WHERE lower(ua.username) = $1 AND ua.is_deleted = false
+     WHERE (lower(ua.username) = $1 OR lower(e.email) = $1)
+       AND ua.is_deleted = false
      LIMIT 1`,
     [loginId]
   );
 
   const user = result.rows[0];
-  if (!user || !await bcrypt.compare(password, user.password_hash)) {
+
+  // Always run bcrypt regardless of whether user exists (timing-safe)
+  const hashToCheck = user ? user.password_hash : DUMMY_HASH;
+  const passwordValid = await bcrypt.compare(password, hashToCheck);
+
+  if (!user || !passwordValid) {
     throw new AppError('Invalid email/username or password', 401);
   }
 
