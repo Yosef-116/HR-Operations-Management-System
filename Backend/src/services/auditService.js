@@ -21,12 +21,12 @@ const writeAuditLog = async ({
   newValue = null,
   ipAddress = null
 }) => {
-  if (tableName === 'auth.audit_logs') return;
+  if (tableName === 'hr_auth.audit_logs') return;
 
   const executor = client || db;
   try {
     await executor.query(
-      `INSERT INTO auth.audit_logs (user_id, action_type, table_name, record_id, old_value, new_value, ip_address)
+      `INSERT INTO hr_auth.audit_logs (user_id, action_type, table_name, record_id, old_value, new_value, ip_address)
        VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)`,
       [
         userId || null,

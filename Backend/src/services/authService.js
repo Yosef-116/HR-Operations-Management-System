@@ -35,11 +35,11 @@ const getUserProfile = async (userId, client = null) => {
        ${publicUserFields},
        COALESCE(array_agg(DISTINCT r.role_name) FILTER (WHERE r.role_name IS NOT NULL), '{}') AS roles,
        COALESCE(array_agg(DISTINCT rp.permission_name) FILTER (WHERE rp.permission_name IS NOT NULL), '{}') AS permissions
-     FROM auth.user_accounts ua
+     FROM hr_auth.user_accounts ua
      LEFT JOIN org.employee e ON e.employee_id = ua.employee_id
-     LEFT JOIN auth.user_roles ur ON ur.user_id = ua.user_id
-     LEFT JOIN auth.roles r ON r.role_id = ur.role_id
-     LEFT JOIN auth.role_permissions rp ON rp.role_id = r.role_id
+     LEFT JOIN hr_auth.user_roles ur ON ur.user_id = ua.user_id
+     LEFT JOIN hr_auth.roles r ON r.role_id = ur.role_id
+     LEFT JOIN hr_auth.role_permissions rp ON rp.role_id = r.role_id
      WHERE ua.user_id = $1 AND ua.is_deleted = false
      GROUP BY ua.user_id, e.employee_id, e.email, e.f_name, e.l_name, e.employment_status`,
     [userId]
@@ -62,7 +62,7 @@ const signToken = (profile) => jwt.sign(
 
 const getUserCount = async (client = null) => {
   const executor = client || db;
-  const result = await executor.query('SELECT COUNT(*)::int AS total FROM auth.user_accounts WHERE is_deleted = false');
+  const result = await executor.query('SELECT COUNT(*)::int AS total FROM hr_auth.user_accounts WHERE is_deleted = false');
   return result.rows[0].total;
 };
 
@@ -90,7 +90,7 @@ const ensureEmployeeCanUseAuth = (employee) => {
 
 const ensureRole = async (roleName, client) => {
   const result = await client.query(
-    `INSERT INTO auth.roles (role_name)
+    `INSERT INTO hr_auth.roles (role_name)
      VALUES ($1)
      ON CONFLICT (role_name) DO UPDATE SET role_name = EXCLUDED.role_name
      RETURNING role_id`,
@@ -101,26 +101,26 @@ const ensureRole = async (roleName, client) => {
 
 const ensurePermission = async (roleId, permissionName, client) => {
   const exists = await client.query(
-    'SELECT 1 FROM auth.role_permissions WHERE role_id = $1 AND permission_name = $2 LIMIT 1',
+    'SELECT 1 FROM hr_auth.role_permissions WHERE role_id = $1 AND permission_name = $2 LIMIT 1',
     [roleId, permissionName]
   );
   if (exists.rowCount) return;
 
   await client.query(
-    'INSERT INTO auth.role_permissions (role_id, permission_name) VALUES ($1, $2)',
+    'INSERT INTO hr_auth.role_permissions (role_id, permission_name) VALUES ($1, $2)',
     [roleId, permissionName]
   );
 };
 
 const assignRole = async (userId, roleId, client) => {
   const exists = await client.query(
-    'SELECT 1 FROM auth.user_roles WHERE user_id = $1 AND role_id = $2 LIMIT 1',
+    'SELECT 1 FROM hr_auth.user_roles WHERE user_id = $1 AND role_id = $2 LIMIT 1',
     [userId, roleId]
   );
   if (exists.rowCount) return;
 
   await client.query(
-    'INSERT INTO auth.user_roles (user_id, role_id) VALUES ($1, $2)',
+    'INSERT INTO hr_auth.user_roles (user_id, role_id) VALUES ($1, $2)',
     [userId, roleId]
   );
 };
@@ -140,7 +140,7 @@ const seedCoreRoles = async (client) => {
 const createAccountForEmployee = async ({ employee, password, roleNames = [] }, client) => {
   const existingByEmployee = await client.query(
     `SELECT user_id
-     FROM auth.user_accounts
+     FROM hr_auth.user_accounts
      WHERE employee_id = $1 AND is_deleted = false
      LIMIT 1`,
     [employee.employee_id]
@@ -152,7 +152,7 @@ const createAccountForEmployee = async ({ employee, password, roleNames = [] }, 
   const username = normalizeEmail(employee.email);
   const existingByEmail = await client.query(
     `SELECT user_id
-     FROM auth.user_accounts
+     FROM hr_auth.user_accounts
      WHERE lower(username) = $1 AND is_deleted = false
      LIMIT 1`,
     [username]
@@ -167,7 +167,7 @@ const createAccountForEmployee = async ({ employee, password, roleNames = [] }, 
   const passwordHash = await bcrypt.hash(passwordToHash, env.bcryptRounds);
 
   const created = await client.query(
-    `INSERT INTO auth.user_accounts (employee_id, username, password_hash)
+    `INSERT INTO hr_auth.user_accounts (employee_id, username, password_hash)
      VALUES ($1, $2, $3)
      RETURNING user_id`,
     [employee.employee_id, username, passwordHash]
@@ -191,7 +191,7 @@ const register = async ({ employee_id, username, password, role_names = [] }) =>
 
   return db.withTransaction(async (client) => {
     const existing = await client.query(
-      'SELECT 1 FROM auth.user_accounts WHERE username = $1 AND is_deleted = false LIMIT 1',
+      'SELECT 1 FROM hr_auth.user_accounts WHERE username = $1 AND is_deleted = false LIMIT 1',
       [username]
     );
     if (existing.rowCount) {
@@ -203,7 +203,7 @@ const register = async ({ employee_id, username, password, role_names = [] }) =>
     const passwordHash = await bcrypt.hash(password, env.bcryptRounds);
 
     const created = await client.query(
-      `INSERT INTO auth.user_accounts (employee_id, username, password_hash)
+      `INSERT INTO hr_auth.user_accounts (employee_id, username, password_hash)
        VALUES ($1, $2, $3)
        RETURNING user_id`,
       [employee_id || null, username, passwordHash]
@@ -264,7 +264,7 @@ const login = async ({ username, email, password }) => {
 
   const result = await db.query(
     `SELECT ua.user_id, ua.username, ua.password_hash, ua.is_active, e.employment_status
-     FROM auth.user_accounts ua
+     FROM hr_auth.user_accounts ua
      LEFT JOIN org.employee e ON e.employee_id = ua.employee_id
      WHERE (lower(ua.username) = $1 OR lower(e.email) = $1)
        AND ua.is_deleted = false
@@ -290,7 +290,7 @@ const login = async ({ username, email, password }) => {
     throw new AppError(`Employee account is not active: ${user.employment_status}`, 403);
   }
 
-  await db.query('UPDATE auth.user_accounts SET last_login = now() WHERE user_id = $1', [user.user_id]);
+  await db.query('UPDATE hr_auth.user_accounts SET last_login = now() WHERE user_id = $1', [user.user_id]);
   const profile = await getUserProfile(user.user_id);
 
   return {
@@ -335,7 +335,7 @@ const loginWithGoogle = async ({ idToken }) => {
 
     const existing = await client.query(
       `SELECT user_id, is_active
-       FROM auth.user_accounts
+       FROM hr_auth.user_accounts
        WHERE lower(username) = $1 AND is_deleted = false
        LIMIT 1`,
       [email]
@@ -356,7 +356,7 @@ const loginWithGoogle = async ({ idToken }) => {
       userId = profile.user_id;
     }
 
-    await client.query('UPDATE auth.user_accounts SET last_login = now() WHERE user_id = $1', [userId]);
+    await client.query('UPDATE hr_auth.user_accounts SET last_login = now() WHERE user_id = $1', [userId]);
     const profile = await getUserProfile(userId, client);
 
     return {

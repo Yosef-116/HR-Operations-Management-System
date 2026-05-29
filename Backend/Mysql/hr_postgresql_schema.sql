@@ -1,7 +1,7 @@
 -- HR and Operations Management System
 -- PostgreSQL schema generated from HR_Final_v3_Relational_Normalization.docx
 -- Run this on an empty database. For local rebuilds, uncomment the DROP SCHEMA line below.
--- DROP SCHEMA IF EXISTS shared, auth, training, performance, people, payroll, recruitment, org CASCADE;
+-- DROP SCHEMA IF EXISTS shared, hr_auth, training, performance, people, payroll, recruitment, org CASCADE;
 
 CREATE SCHEMA IF NOT EXISTS org;
 CREATE SCHEMA IF NOT EXISTS recruitment;
@@ -9,7 +9,7 @@ CREATE SCHEMA IF NOT EXISTS payroll;
 CREATE SCHEMA IF NOT EXISTS people;
 CREATE SCHEMA IF NOT EXISTS performance;
 CREATE SCHEMA IF NOT EXISTS training;
-CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS hr_auth;
 CREATE SCHEMA IF NOT EXISTS shared;
 
 -- Table 2.1: Employee
@@ -596,7 +596,7 @@ CREATE TABLE training.training_evaluations (
 );
 
 -- Table 2.47: User_accounts
-CREATE TABLE auth.user_accounts (
+CREATE TABLE hr_auth.user_accounts (
     user_id SERIAL,
     employee_id INTEGER UNIQUE,
     username VARCHAR(50) NOT NULL UNIQUE,
@@ -610,14 +610,14 @@ CREATE TABLE auth.user_accounts (
 );
 
 -- Table 2.48: Roles
-CREATE TABLE auth.roles (
+CREATE TABLE hr_auth.roles (
     role_id SERIAL,
     role_name VARCHAR(100) NOT NULL UNIQUE,
     CONSTRAINT roles_pkey PRIMARY KEY (role_id)
 );
 
 -- Table 2.49: Role_permissions
-CREATE TABLE auth.role_permissions (
+CREATE TABLE hr_auth.role_permissions (
     permission_id SERIAL,
     role_id INTEGER,
     permission_name VARCHAR(100) NOT NULL,
@@ -625,7 +625,7 @@ CREATE TABLE auth.role_permissions (
 );
 
 -- Table 2.50: Audit_logs
-CREATE TABLE auth.audit_logs (
+CREATE TABLE hr_auth.audit_logs (
     log_id SERIAL,
     user_id INTEGER,
     action_type VARCHAR(20) NOT NULL,
@@ -639,7 +639,7 @@ CREATE TABLE auth.audit_logs (
 );
 
 -- Table 2.51: User_roles
-CREATE TABLE auth.user_roles (
+CREATE TABLE hr_auth.user_roles (
     user_id INTEGER,
     role_id INTEGER,
     CONSTRAINT user_roles_pkey PRIMARY KEY (user_id, role_id)
@@ -732,11 +732,11 @@ ALTER TABLE performance.performance_review ADD CONSTRAINT fk_performance_review_
 ALTER TABLE training.trainings ADD CONSTRAINT fk_trainings_employee_id FOREIGN KEY (employee_id) REFERENCES org.employee (employee_id);
 ALTER TABLE training.training_evaluations ADD CONSTRAINT fk_training_evaluations_training_id FOREIGN KEY (training_id) REFERENCES training.trainings (training_id);
 ALTER TABLE training.training_evaluations ADD CONSTRAINT fk_training_evaluations_evaluated_by FOREIGN KEY (evaluated_by) REFERENCES org.employee (employee_id);
-ALTER TABLE auth.user_accounts ADD CONSTRAINT fk_user_accounts_employee_id FOREIGN KEY (employee_id) REFERENCES org.employee (employee_id);
-ALTER TABLE auth.role_permissions ADD CONSTRAINT fk_role_permissions_role_id FOREIGN KEY (role_id) REFERENCES auth.roles (role_id);
-ALTER TABLE auth.audit_logs ADD CONSTRAINT fk_audit_logs_user_id FOREIGN KEY (user_id) REFERENCES auth.user_accounts (user_id);
-ALTER TABLE auth.user_roles ADD CONSTRAINT fk_user_roles_user_id FOREIGN KEY (user_id) REFERENCES auth.user_accounts (user_id);
-ALTER TABLE auth.user_roles ADD CONSTRAINT fk_user_roles_role_id FOREIGN KEY (role_id) REFERENCES auth.roles (role_id);
+ALTER TABLE hr_auth.user_accounts ADD CONSTRAINT fk_user_accounts_employee_id FOREIGN KEY (employee_id) REFERENCES org.employee (employee_id);
+ALTER TABLE hr_auth.role_permissions ADD CONSTRAINT fk_role_permissions_role_id FOREIGN KEY (role_id) REFERENCES hr_auth.roles (role_id);
+ALTER TABLE hr_auth.audit_logs ADD CONSTRAINT fk_audit_logs_user_id FOREIGN KEY (user_id) REFERENCES hr_auth.user_accounts (user_id);
+ALTER TABLE hr_auth.user_roles ADD CONSTRAINT fk_user_roles_user_id FOREIGN KEY (user_id) REFERENCES hr_auth.user_accounts (user_id);
+ALTER TABLE hr_auth.user_roles ADD CONSTRAINT fk_user_roles_role_id FOREIGN KEY (role_id) REFERENCES hr_auth.roles (role_id);
 ALTER TABLE shared.documents ADD CONSTRAINT fk_documents_uploaded_by FOREIGN KEY (uploaded_by) REFERENCES org.employee (employee_id);
 
 CREATE INDEX idx_employee_dept_id ON org.employee (dept_id);
@@ -811,11 +811,11 @@ CREATE INDEX idx_performance_review_reviewer_id ON performance.performance_revie
 CREATE INDEX idx_trainings_employee_id ON training.trainings (employee_id);
 CREATE INDEX idx_training_evaluations_training_id ON training.training_evaluations (training_id);
 CREATE INDEX idx_training_evaluations_evaluated_by ON training.training_evaluations (evaluated_by);
-CREATE INDEX idx_user_accounts_employee_id ON auth.user_accounts (employee_id);
-CREATE INDEX idx_role_permissions_role_id ON auth.role_permissions (role_id);
-CREATE INDEX idx_audit_logs_user_id ON auth.audit_logs (user_id);
-CREATE INDEX idx_user_roles_user_id ON auth.user_roles (user_id);
-CREATE INDEX idx_user_roles_role_id ON auth.user_roles (role_id);
+CREATE INDEX idx_user_accounts_employee_id ON hr_auth.user_accounts (employee_id);
+CREATE INDEX idx_role_permissions_role_id ON hr_auth.role_permissions (role_id);
+CREATE INDEX idx_audit_logs_user_id ON hr_auth.audit_logs (user_id);
+CREATE INDEX idx_user_roles_user_id ON hr_auth.user_roles (user_id);
+CREATE INDEX idx_user_roles_role_id ON hr_auth.user_roles (role_id);
 CREATE INDEX idx_documents_uploaded_by ON shared.documents (uploaded_by);
 
 -- Views for documented derived values.

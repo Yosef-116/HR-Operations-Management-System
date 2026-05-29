@@ -10,7 +10,7 @@ const schemaLabels = {
   people: 'Promotion',
   performance: 'Performance',
   training: 'Training',
-  auth: 'Security & Access',
+  hr_auth: 'Security & Access',
   shared: 'Cross-Module'
 };
 
@@ -23,10 +23,14 @@ const parseColumnType = (definition) => {
 
 const parseResources = (sql) => {
   const resources = {};
+  // Use \r?\n to handle both Unix (LF) and Windows (CRLF) line endings.
+  // The original \n-only pattern silently matched nothing on CRLF files,
+  // leaving resourceList empty and every GET /data/* route returning 404.
+  const normalizedSql = sql.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const createTablePattern = /CREATE TABLE\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s*\(([\s\S]*?)\n\);/gi;
   let match;
 
-  while ((match = createTablePattern.exec(sql)) !== null) {
+  while ((match = createTablePattern.exec(normalizedSql)) !== null) {
     const [, schema, table, body] = match;
     const lines = body.split('\n').map((line) => line.trim()).filter(Boolean);
     const columns = [];
@@ -68,14 +72,14 @@ const parseResources = (sql) => {
       columns,
       foreignKeys: {},
       softDelete: columns.some((column) => column.name === 'is_deleted') && columns.some((column) => column.name === 'deleted_at'),
-      appendOnly: schema === 'auth' && table === 'audit_logs'
+      appendOnly: schema === 'hr_auth' && table === 'audit_logs'
     };
 
     resources[resource.key] = resource;
   }
 
   const foreignKeyPattern = /ALTER TABLE\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s+ADD CONSTRAINT\s+[a-z_][a-z0-9_]*\s+FOREIGN KEY\s+\(([^)]+)\)\s+REFERENCES\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s+\(([^)]+)\)/gi;
-  while ((match = foreignKeyPattern.exec(sql)) !== null) {
+  while ((match = foreignKeyPattern.exec(normalizedSql)) !== null) {
     const [, schema, table, column, targetSchema, targetTable, targetColumn] = match;
     const key = `${schema}.${table}`;
     if (resources[key]) {
