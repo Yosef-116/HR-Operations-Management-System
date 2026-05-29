@@ -1,8 +1,0 @@
-node_modules
-npm-debug.log
-.env
-uploads
-Mysql/.pgdata
-server.out.log
-server.err.log
-.git
