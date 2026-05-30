@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Operations — WorkForce</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f11;--bg2:#161618;--bg3:#1e1e22;--bg4:#26262c;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#f0f0f2;--text2:#9898a8;--text3:#5a5a6e;
+  --accent:#7c6af0;--accent2:#a897ff;--accent-bg:rgba(124,106,240,0.12);
+  --success:#3ecf8e;--success-bg:rgba(62,207,142,0.1);
+  --warning:#f5a623;--warning-bg:rgba(245,166,35,0.1);
+  --danger:#f56565;--danger-bg:rgba(245,101,101,0.1);
+  --info:#63b3ed;--info-bg:rgba(99,179,237,0.1);
+  --radius:10px;--radius-lg:14px;--sidebar-w:240px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px}
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+#topbar{height:56px;min-height:56px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:10}
+#content{flex:1;padding:28px}
+.sidebar-logo{padding:20px 18px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.logo-icon{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),#9f8fff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;flex-shrink:0}
+.logo-text{font-size:15px;font-weight:600;letter-spacing:-0.3px}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase}
+.nav-section{padding:6px 10px;margin-bottom:2px}
+.nav-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);padding:4px 8px 6px;font-weight:500}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;color:var(--text2);transition:all 0.15s;font-size:13.5px;font-weight:400;text-decoration:none}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent2);font-weight:500}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:0.8}
+.nav-item.active svg{opacity:1}
+.nav-badge{margin-left:auto;background:var(--accent-bg);color:var(--accent2);font-size:10px;padding:2px 6px;border-radius:10px;font-weight:500}
+.sidebar-user{margin-top:auto;padding:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#9f8fff);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.avatar-sm{width:26px;height:26px;font-size:10px}
+.user-info{flex:1;min-width:0}
+.user-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-role{font-size:11px;color:var(--text3)}
+.logout-btn{background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;border-radius:6px;transition:color 0.15s}
+.logout-btn:hover{color:var(--danger)}
+.page-title{font-size:16px;font-weight:600;letter-spacing:-0.2px}
+.topbar-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text2);font-size:13px;min-width:200px}
+.search-box input{background:none;border:none;color:var(--text);font-size:13px;outline:none;flex:1;font-family:var(--font)}
+.search-box input::placeholder{color:var(--text3)}
+.icon-btn{width:34px;height:34px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text2);transition:all 0.15s}
+.icon-btn:hover{border-color:var(--border2);color:var(--text)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all 0.15s;font-family:var(--font)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover:not(:disabled){background:#8f7ef5}
+.btn-secondary{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.btn-secondary:hover:not(:disabled){background:var(--bg4)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(245,101,101,0.2)}
+.btn-success{background:var(--success-bg);color:var(--success);border:1px solid rgba(62,207,142,0.2)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn svg{width:14px;height:14px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600}
+.card-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px}
+.stat-label{font-size:11px;text-transform:uppercase;letter-spacing:0.6px;color:var(--text3);margin-bottom:8px;font-weight:500}
+.stat-value{font-size:28px;font-weight:600;letter-spacing:-1px;line-height:1;margin-bottom:6px}
+.stat-change{font-size:11px;display:flex;align-items:center;gap:4px}
+.stat-change.up{color:var(--success)}
+.stat-change.neutral{color:var(--text3)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);font-weight:500;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3);color:var(--text)}
+.td-main{color:var(--text);font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500}
+.badge-success{background:var(--success-bg);color:var(--success)}
+.badge-warning{background:var(--warning-bg);color:var(--warning)}
+.badge-danger{background:var(--danger-bg);color:var(--danger)}
+.badge-info{background:var(--info-bg);color:var(--info)}
+.badge-neutral{background:var(--bg4);color:var(--text2)}
+.badge-accent{background:var(--accent-bg);color:var(--accent2)}
+.badge-dot::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+label{font-size:12px;font-weight:500;color:var(--text2)}
+input,select,textarea{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:var(--font);outline:none;transition:border-color 0.15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder{color:var(--text3)}
+select option{background:var(--bg3)}
+textarea{resize:vertical;min-height:80px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:16px;padding:24px;width:520px;max-width:95vw;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;transition:color 0.15s}
+.modal-close:hover{color:var(--text)}
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.auth-card{width:400px}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.auth-title{font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.auth-form{display:flex;flex-direction:column;gap:14px}
+.auth-footer{margin-top:16px;font-size:12px;color:var(--text3);text-align:center}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.progress-bar{height:4px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.progress-fill{height:100%;border-radius:4px;background:var(--accent);transition:width 0.3s}
+.activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.activity-item:last-child{border-bottom:none}
+.notif-dot{width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg2);position:absolute;top:6px;right:6px}
+.spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast-item{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;max-width:320px;display:flex;align-items:center;gap:10px;animation:slideIn 0.2s ease;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.toast-item.success{border-color:rgba(62,207,142,0.3)}
+.toast-item.error{border-color:rgba(245,101,101,0.3)}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.tabs{display:flex;gap:2px;background:var(--bg3);border-radius:10px;padding:3px;margin-bottom:20px}
+.tab{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;color:var(--text2);transition:all 0.15s;font-weight:400;border:none;background:none;font-family:var(--font)}
+.tab.active{background:var(--bg);color:var(--text);font-weight:500}
+.tab:hover:not(.active){color:var(--text)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px;color:var(--text3);gap:10px;text-align:center}
+.empty-icon{font-size:36px;opacity:0.3}
+.empty-title{font-size:14px;font-weight:500;color:var(--text2)}
+.loading-row td{text-align:center;padding:32px;color:var(--text3)}
+.error-banner{background:var(--danger-bg);border:1px solid rgba(245,101,101,0.2);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--danger);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+@media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){#sidebar{display:none}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- Auth Screen -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon" style="width:42px;height:42px;font-size:20px;">W</div>
+      <div>
+        <div style="font-size:20px;font-weight:700;letter-spacing:-0.5px;">WorkForce</div>
+        <div style="font-size:11px;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;">HR Operations</div>
+      </div>
+    </div>
+    <div class="auth-title">Welcome back</div>
+    <div class="auth-sub">Sign in to your HR portal to continue.</div>
+    <div class="auth-form">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@company.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleLogin()">
+      </div>
+      <button class="btn btn-primary" id="login-btn" style="margin-top:4px;justify-content:center;padding:11px;" onclick="handleLogin()">Sign in</button>
+    </div>
+    <div class="auth-footer">
+      Don't have an account? <a href="#" style="color:var(--accent2);" onclick="showSignup()">Sign up with employee email</a>
+    </div>
+    <div id="auth-error" style="margin-top:12px;font-size:12px;color:var(--danger);display:none;"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app" style="display:none;">
+  <div id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">W</div>
+      <div><div class="logo-text">WorkForce</div><div class="logo-sub">HR Operations</div></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a class="nav-item active" onclick="navigate('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" onclick="navigate('employees',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+        Employees
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Payroll & Finance</div>
+      <a class="nav-item" onclick="navigate('payroll',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        Payroll
+      </a>
+      <a class="nav-item" onclick="navigate('expenses',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        Expenses
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">People</div>
+      <a class="nav-item" onclick="navigate('leave',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Leave Requests
+        <span class="nav-badge" id="leave-badge">…</span>
+      </a>
+      <a class="nav-item" onclick="navigate('recruitment',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Recruitment
+      </a>
+      <a class="nav-item" onclick="navigate('performance',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Performance
+      </a>
+      <a class="nav-item" onclick="navigate('training',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Training
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Operations</div>
+      <a class="nav-item" onclick="navigate('assets',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        Assets
+      </a>
+      <a class="nav-item" onclick="navigate('grievances',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Grievances
+      </a>
+      <a class="nav-item" onclick="navigate('onboarding',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Onboarding
+      </a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Admin</div>
+      <a class="nav-item" onclick="navigate('audit',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        Audit Logs
+      </a>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" id="sidebar-avatar">AD</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">Admin</div>
+        <div class="user-role" id="sidebar-role">Administrator</div>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Sign out">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="topbar">
+      <div class="page-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input id="global-search" type="text" placeholder="Search employees, records...">
+        </div>
+        <div style="position:relative;">
+          <button class="icon-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+          </button>
+          <div class="notif-dot"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="topbar-cta" onclick="topbarAction()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Add Employee
+        </button>
+      </div>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<div id="modal-container"></div>
+
+<script>
+// ===================== CONFIG =====================
+// Change this to your deployed URL before going live
+const API = '/api/v1';
+
+// ===================== STATE =====================
+// Token is kept in memory only — not localStorage — to protect against XSS
+let authToken = sessionStorage.getItem('hr_token') || null;
+let currentUser = null;
+let currentPage = 'dashboard';
+
+// ===================== HTTP HELPER =====================
+// All API calls go through here — attaches the token and normalises errors
+async function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+  const res = await fetch(`${API}${path}`, { ...opts, headers });
+  const json = await res.json().catch(() => ({ success: false, message: `HTTP ${res.status}` }));
+
+  if (!res.ok) {
+    const err = new Error(json.message || `Request failed: ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  return json;
+}
+
+// Convenience wrappers
+const GET  = (path)         => api(path);
+const POST = (path, body)   => api(path, { method: 'POST',  body: JSON.stringify(body) });
+const PATCH = (path, body)  => api(path, { method: 'PATCH', body: JSON.stringify(body) });
+const DEL  = (path)         => api(path, { method: 'DELETE' });
+
+// ===================== AUTH =====================
+async function handleLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthError('Please enter email and password.'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  try {
+    const data = await POST('/auth/login', { email, password });
+    authToken = data.data.token;
+    sessionStorage.setItem('hr_token', authToken);
+    currentUser = data.data.user;
+    enterApp();
+  } catch (e) {
+    showAuthError(e.status === 401 ? 'Invalid email or password.' : (e.message || 'Could not reach server.'));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  }
+}
+
+function showSignup() {
+  showModal('Sign Up', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee Email (must exist in the system)</label><input type="email" id="su-email" placeholder="your.email@company.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="su-pw" placeholder="Min. 8 characters"></div>
+      <div class="form-group"><label>Confirm Password</label><input type="password" id="su-pw2" placeholder="Repeat password"></div>
+    </div>
+  `, [
+    { label: 'Create Account', cls: 'btn-primary', action: async () => {
+      const email = document.getElementById('su-email').value;
+      const pw    = document.getElementById('su-pw').value;
+      const pw2   = document.getElementById('su-pw2').value;
+      if (!email || !pw) return showToast('Please fill all fields', 'error');
+      if (pw !== pw2)    return showToast('Passwords do not match', 'error');
+      try {
+        await POST('/auth/signup', { email, password: pw });
+        showToast('Account created! Please sign in.', 'success');
+        closeModal();
+      } catch (e) {
+        showToast(e.message || 'Signup failed', 'error');
+      }
+    }},
+    { label: 'Cancel', cls: 'btn-secondary', action: closeModal }
+  ]);
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function enterApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  const username = currentUser.username || currentUser.email || 'User';
+  const displayName = username.split('@')[0].replace('.', ' ').split(' ')
+    .map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
+  document.getElementById('sidebar-name').textContent = displayName;
+  document.getElementById('sidebar-role').textContent = currentUser.roles?.[0] || 'Employee';
+  document.getElementById('sidebar-avatar').textContent = displayName.split(' ').map(w => w[0]).slice(0,2).join('');
+  navigate('dashboard');
+  refreshLeaveBadge();
+}
+
+function handleLogout() {
+  authToken = null;
+  currentUser = null;
+  sessionStorage.removeItem('hr_token');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+}
+
+// ===================== NAVIGATION =====================
+const PAGE_TITLES = { dashboard:'Dashboard', employees:'Employees', payroll:'Payroll', expenses:'Expense Claims', leave:'Leave Requests', recruitment:'Recruitment', performance:'Performance', training:'Training', assets:'Assets', grievances:'Grievances', onboarding:'Onboarding', audit:'Audit Logs' };
+const PAGE_CTA    = { employees:'Add Employee', payroll:'New Payroll Run', expenses:'Submit Expense', leave:'New Request', recruitment:'Add Candidate', training:'Add Training', assets:'Add Asset', grievances:'File Grievance', onboarding:'Start Onboarding', performance:'New Review' };
+
+function navigate(page, el) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  (el || document.querySelector(`.nav-item[onclick*="${page}"]`))?.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page] || page;
+  const ctaBtn = document.getElementById('topbar-cta');
+  if (PAGE_CTA[page]) { ctaBtn.style.display = ''; ctaBtn.lastChild.textContent = ' ' + PAGE_CTA[page]; }
+  else ctaBtn.style.display = 'none';
+  const renders = { dashboard:renderDashboard, employees:renderEmployees, payroll:renderPayroll, expenses:renderExpenses, leave:renderLeave, recruitment:renderRecruitment, performance:renderPerformance, training:renderTraining, assets:renderAssets, grievances:renderGrievances, onboarding:renderOnboarding, audit:renderAudit };
+  if (renders[page]) renders[page]();
+}
+
+function topbarAction() {
+  const actions = { employees:showAddEmployee, payroll:showNewPayrollRun, expenses:showAddExpense, leave:showNewLeave, recruitment:showAddCandidate, training:showAddTraining, assets:showAddAsset, grievances:showNewGrievance, onboarding:showNewOnboarding, performance:showNewReview };
+  if (actions[currentPage]) actions[currentPage]();
+}
+
+// ===================== LOADING STATE HELPER =====================
+function loadingTable(cols) {
+  return `<tr class="loading-row"><td colspan="${cols}"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
+}
+
+// ===================== DASHBOARD =====================
+async function renderDashboard() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="dash-stats">
+      ${['Total Employees','On Leave Today','Open Positions','Payroll (Last Run)'].map(l => `
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="grid-2" style="gap:18px;margin-bottom:20px;">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Pending Leave Requests</div><div class="card-sub">Awaiting your approval</div></div></div>
+        <div id="dash-leave-pending">Loading…</div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Recent Expense Claims</div><div class="card-sub">Pending approval</div></div></div>
+        <div id="dash-expense-pending">Loading…</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Recent Audit Activity</div></div><button class="btn btn-secondary btn-sm" onclick="navigate('audit')">View all</button></div>
+      <div class="table-wrap"><table><thead><tr><th>User</th><th>Action</th><th>Table</th><th>Time</th></tr></thead><tbody id="dash-audit">${loadingTable(4)}</tbody></table></div>
+    </div>
+  `;
+
+  try {
+    const [empRes, leaveRes, auditRes, expRes] = await Promise.all([
+      GET('/data/org/employee?limit=1'),
+      GET('/data/payroll/leave_requests?status=Pending&limit=5'),
+      GET('/data/auth/audit_logs?limit=5&sort=time_stamp&order=desc'),
+      GET('/data/payroll/expense_claims?status=Pending&limit=4'),
+    ]);
+
+    const statsEl = document.getElementById('dash-stats');
+    statsEl.innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total Employees</div><div class="stat-value">${empRes.meta.total}</div><div class="stat-change neutral">Active records</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Leave</div><div class="stat-value" style="color:var(--warning);">${leaveRes.meta.total}</div><div class="stat-change neutral">Awaiting approval</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Expenses</div><div class="stat-value" style="color:var(--accent2);">${expRes.meta.total}</div><div class="stat-change neutral">Claims to review</div></div>
+      <div class="stat-card"><div class="stat-label">Audit Events</div><div class="stat-value" style="font-size:22px;">${auditRes.meta.total}</div><div class="stat-change neutral">Total logged</div></div>
+    `;
+
+    const leaveEl = document.getElementById('dash-leave-pending');
+    if (leaveRes.data.length === 0) {
+      leaveEl.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-title">No pending leave requests</div></div>';
+    } else {
+      leaveEl.innerHTML = leaveRes.data.map(l => `
+        <div class="activity-item">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">Employee #${l.employee_id} — ${l.type_id ? 'Leave type '+l.type_id : 'Leave'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${l.start_date} → ${l.end_date}</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-success btn-sm" onclick="quickApproveLeave(${l.request_id})">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="quickRejectLeave(${l.request_id})">Reject</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    const expEl = document.getElementById('dash-expense-pending');
+    if (expRes.data.length === 0) {
+      expEl.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-title">No pending expense claims</div></div>';
+    } else {
+      expEl.innerHTML = expRes.data.map(e => `
+        <div class="activity-item">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;">Employee #${e.employee_id} — ${e.category||'Expense'}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">${e.description||''} · ${e.amount} ETB</div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="quickApproveExpense(${e.claim_id})">Approve</button>
+        </div>
+      `).join('');
+    }
+
+    const auditEl = document.getElementById('dash-audit');
+    auditEl.innerHTML = auditRes.data.map(a => `
+      <tr>
+        <td class="td-main" style="font-size:12px;">${a.user_id || '—'}</td>
+        <td><span class="badge ${a.action_type==='INSERT'?'badge-success':a.action_type==='DELETE'?'badge-danger':'badge-info'} badge-dot">${a.action_type}</span></td>
+        <td><code style="font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">${a.table_name}</code></td>
+        <td style="font-size:11px;color:var(--text3);">${a.time_stamp ? new Date(a.time_stamp).toLocaleString() : '—'}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    showToast('Failed to load dashboard data: ' + e.message, 'error');
+  }
+}
+
+async function quickApproveLeave(id) {
+  try { await POST(`/workflows/leave-requests/${id}/approve`, {}); showToast('Leave request approved', 'success'); renderDashboard(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+async function quickRejectLeave(id) {
+  try { await POST(`/workflows/leave-requests/${id}/reject`, {}); showToast('Leave request rejected', 'error'); renderDashboard(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+async function quickApproveExpense(id) {
+  try { await POST(`/workflows/expense-claims/${id}/approve`, { status: 'Approved' }); showToast('Expense approved', 'success'); renderDashboard(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+// ===================== EMPLOYEES =====================
+async function renderEmployees() {
+  document.getElementById('content').innerHTML = `
+    <div class="card" style="margin-bottom:16px;padding:14px 20px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="emp-search" placeholder="Search by name or email…" style="flex:1;min-width:200px;" oninput="searchEmployees(this.value)">
+        <select id="emp-status" onchange="loadEmployees()" style="width:140px;">
+          <option value="">All status</option><option>Active</option><option>Inactive</option><option>Resigned</option><option>Terminated</option>
+        </select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table><thead><tr><th>Employee</th><th>Department</th><th>Job</th><th>Status</th><th>Hire Date</th><th>Actions</th></tr></thead>
+        <tbody id="emp-tbody">${loadingTable(6)}</tbody></table>
+      </div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:12px;color:var(--text3);" id="emp-count">Loading…</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" id="emp-prev" onclick="changePage(-1)">← Previous</button>
+          <button class="btn btn-secondary btn-sm" id="emp-next" onclick="changePage(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+  `;
+  window._empPage = 1;
+  await loadEmployees();
+}
+
+let _empSearchTimeout;
+function searchEmployees(val) {
+  clearTimeout(_empSearchTimeout);
+  _empSearchTimeout = setTimeout(() => { window._empPage = 1; loadEmployees(); }, 400);
+}
+
+async function loadEmployees() {
+  const search = document.getElementById('emp-search')?.value || '';
+  const status = document.getElementById('emp-status')?.value || '';
+  const page = window._empPage || 1;
+  const tbody = document.getElementById('emp-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = loadingTable(6);
+
+  try {
+    let qs = `?limit=15&page=${page}`;
+    if (search) qs += `&search=${encodeURIComponent(search)}`;
+    if (status) qs += `&employment_status=${encodeURIComponent(status)}`;
+    const res = await GET(`/data/org/employee${qs}`);
+    const statusColors = { Active:'badge-success', Inactive:'badge-neutral', 'On Leave':'badge-warning', Resigned:'badge-neutral', Terminated:'badge-danger' };
+
+    tbody.innerHTML = res.data.length === 0
+      ? `<tr><td colspan="6"><div class="empty"><div class="empty-icon">👥</div><div class="empty-title">No employees found</div></div></td></tr>`
+      : res.data.map(e => `
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="avatar avatar-sm" style="background:hsl(${(e.employee_id||1)*47}deg,55%,40%)">${(e.f_name||'?')[0]}${(e.l_name||'?')[0]}</div>
+              <div>
+                <div class="td-main">${e.f_name||''} ${e.l_name||''}</div>
+                <div style="font-size:11px;color:var(--text3);">${e.email||''}</div>
+              </div>
+            </div>
+          </td>
+          <td>${e.dept_id||'—'}</td>
+          <td>${e.job_id||'—'}</td>
+          <td><span class="badge ${statusColors[e.employment_status]||'badge-neutral'} badge-dot">${e.employment_status||'—'}</span></td>
+          <td>${e.hire_date ? e.hire_date.slice(0,10) : '—'}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-secondary btn-sm" onclick='viewEmployee(${JSON.stringify(e)})'>View</button>
+              <button class="btn btn-secondary btn-sm" onclick='editEmployee(${JSON.stringify(e)})'>Edit</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+    document.getElementById('emp-count').textContent = `${res.meta.total} employees · page ${page}`;
+    document.getElementById('emp-prev').disabled = page <= 1;
+    document.getElementById('emp-next').disabled = res.data.length < 15;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="error-banner">⚠ ${e.message}</div></td></tr>`;
+  }
+}
+
+function changePage(dir) {
+  window._empPage = Math.max(1, (window._empPage||1) + dir);
+  loadEmployees();
+}
+
+function viewEmployee(e) {
+  showModal(`${e.f_name} ${e.l_name}`, `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--bg3);border-radius:10px;">
+      <div class="avatar" style="width:52px;height:52px;font-size:18px;background:hsl(${(e.employee_id||1)*47}deg,55%,40%)">${(e.f_name||'?')[0]}${(e.l_name||'?')[0]}</div>
+      <div>
+        <div style="font-size:16px;font-weight:600;">${e.f_name} ${e.l_name}</div>
+        <div style="color:var(--text2);font-size:13px;">${e.email||''}</div>
+        <div style="margin-top:6px;"><span class="badge badge-success badge-dot">${e.employment_status||'—'}</span></div>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:12px;">
+      ${[['Employee ID','#'+e.employee_id],['Hire Date',e.hire_date?.slice(0,10)||'—'],['Dept ID',e.dept_id||'—'],['Job ID',e.job_id||'—'],['Gender',e.gender||'—'],['National ID',e.national_id||'—']].map(([l,v])=>`
+        <div style="background:var(--bg3);padding:12px;border-radius:8px;"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${l}</div><div style="font-size:13px;font-weight:500;">${v}</div></div>
+      `).join('')}
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-danger btn-sm" onclick="initiateExit(${e.employee_id});closeModal();">Initiate Exit</button>
+    </div>
+  `, [{ label:'Close', cls:'btn-secondary', action:closeModal }]);
+}
+
+function editEmployee(e) {
+  showModal(`Edit — ${e.f_name} ${e.l_name}`, `
+    <div class="form-grid">
+      <div class="form-group"><label>First Name</label><input id="ee-fn" value="${e.f_name||''}"></div>
+      <div class="form-group"><label>Last Name</label><input id="ee-ln" value="${e.l_name||''}"></div>
+      <div class="form-group form-full"><label>Email</label><input type="email" id="ee-em" value="${e.email||''}"></div>
+      <div class="form-group"><label>Phone</label><input id="ee-ph" value="${e.phone||''}"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="ee-st">
+          ${['Active','Inactive','On Leave','Resigned','Terminated'].map(s=>`<option ${e.employment_status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  `, [
+    { label:'Save Changes', cls:'btn-primary', action: async () => {
+      try {
+        await PATCH(`/data/org/employee/${e.employee_id}`, {
+          f_name: document.getElementById('ee-fn').value,
+          l_name: document.getElementById('ee-ln').value,
+          email:  document.getElementById('ee-em').value,
+          phone:  document.getElementById('ee-ph').value,
+          employment_status: document.getElementById('ee-st').value
+        });
+        showToast('Employee updated', 'success');
+        closeModal();
+        loadEmployees();
+      } catch(err) { showToast(err.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showAddEmployee() {
+  showModal('Add New Employee', `
+    <div class="form-grid">
+      <div class="form-group"><label>First Name *</label><input id="ne-fn" placeholder="Amara"></div>
+      <div class="form-group"><label>Last Name *</label><input id="ne-ln" placeholder="Bekele"></div>
+      <div class="form-group form-full"><label>Email *</label><input type="email" id="ne-em" placeholder="amara.bekele@company.com"></div>
+      <div class="form-group"><label>Gender</label><select id="ne-gn"><option value="">—</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <div class="form-group"><label>Hire Date</label><input type="date" id="ne-hd"></div>
+      <div class="form-group"><label>National ID</label><input id="ne-ni" placeholder="ETH/123456"></div>
+      <div class="form-group"><label>Phone</label><input id="ne-ph" placeholder="+251911000000"></div>
+    </div>
+  `, [
+    { label:'Add Employee', cls:'btn-primary', action: async () => {
+      const fn = document.getElementById('ne-fn').value.trim();
+      const ln = document.getElementById('ne-ln').value.trim();
+      const em = document.getElementById('ne-em').value.trim();
+      if (!fn || !ln || !em) return showToast('First name, last name, and email are required', 'error');
+      try {
+        await POST('/data/org/employee', {
+          f_name: fn, l_name: ln, email: em,
+          gender: document.getElementById('ne-gn').value || null,
+          hire_date: document.getElementById('ne-hd').value || null,
+          national_id: document.getElementById('ne-ni').value || null,
+          phone: document.getElementById('ne-ph').value || null,
+          employment_status: 'Active'
+        });
+        showToast(`${fn} ${ln} added`, 'success');
+        closeModal();
+        loadEmployees();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function initiateExit(employeeId) {
+  showModal('Initiate Employee Exit', `
+    <div class="form-grid">
+      <div class="form-group"><label>Exit Type</label>
+        <select id="ex-type"><option>Resignation</option><option>Termination</option><option>Retirement</option><option>Redundancy</option></select>
+      </div>
+      <div class="form-group"><label>Last Working Day</label><input type="date" id="ex-lwd"></div>
+      <div class="form-group form-full"><label>Reason</label><textarea id="ex-reason" placeholder="Reason for exit…"></textarea></div>
+    </div>
+  `, [
+    { label:'Confirm Exit', cls:'btn-danger', action: async () => {
+      try {
+        await POST(`/workflows/employees/${employeeId}/exit`, {
+          exit_type: document.getElementById('ex-type').value,
+          last_working_day: document.getElementById('ex-lwd').value || undefined,
+          reason: document.getElementById('ex-reason').value || undefined
+        });
+        showToast('Exit workflow initiated and employee record updated', 'success');
+        closeModal();
+        loadEmployees();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== PAYROLL =====================
+async function renderPayroll() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="pr-stats">
+      ${['YTD Payroll','Employees on Payroll','Pending Runs','Last Run'].map(l => `
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Payroll Runs</div></div></div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Period</th><th>Run Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody id="pr-tbody">${loadingTable(5)}</tbody></table>
+      </div>
+    </div>
+  `;
+
+  try {
+    const [runs, emp] = await Promise.all([
+      GET('/data/payroll/payroll_runs?limit=10&sort=run_id&order=desc'),
+      GET('/data/org/employee?limit=1&employment_status=Active')
+    ]);
+
+    const pending = runs.data.filter(r => r.status !== 'Processed').length;
+    const last = runs.data.find(r => r.status === 'Processed');
+    document.getElementById('pr-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total Runs</div><div class="stat-value">${runs.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Active Employees</div><div class="stat-value">${emp.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Runs</div><div class="stat-value" style="color:var(--warning);">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">Last Run Period</div><div class="stat-value" style="font-size:16px;line-height:1.4;">${last ? (last.period_start?.slice(0,7)||'—') : 'None'}</div></div>
+    `;
+
+    const sc = { Draft:'badge-neutral', Approved:'badge-info', Processed:'badge-success' };
+    document.getElementById('pr-tbody').innerHTML = runs.data.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No payroll runs yet</td></tr>`
+      : runs.data.map(r => `
+        <tr>
+          <td class="td-main">${r.period_start?.slice(0,7)||'—'} → ${r.period_end?.slice(0,7)||'—'}</td>
+          <td>${r.run_type||'—'}</td>
+          <td><span class="badge ${sc[r.status]||'badge-neutral'} badge-dot">${r.status}</span></td>
+          <td style="font-size:11px;color:var(--text3);">${r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              ${r.status==='Draft' ? `<button class="btn btn-success btn-sm" onclick="generatePayslips(${r.run_id})">Generate Payslips</button><button class="btn btn-primary btn-sm" onclick="approveRun(${r.run_id})">Approve</button>` : ''}
+              ${r.status==='Approved' ? `<button class="btn btn-primary btn-sm" onclick="processRun(${r.run_id})">Process</button>` : ''}
+              ${r.status==='Processed' ? `<span style="font-size:12px;color:var(--text3);">Processed ✓</span>` : ''}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load payroll: ' + e.message, 'error'); }
+}
+
+async function generatePayslips(runId) {
+  try {
+    const res = await POST(`/workflows/payroll/runs/${runId}/generate-payslips`, { pensionRate: 0.07 });
+    showToast(`${res.data.created.length} payslips generated, ${res.data.skipped.length} skipped`, 'success');
+    renderPayroll();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+async function approveRun(runId) {
+  try { await POST(`/workflows/payroll/runs/${runId}/approve`, {}); showToast('Run approved', 'success'); renderPayroll(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+async function processRun(runId) {
+  try { await POST(`/workflows/payroll/runs/${runId}/process`, {}); showToast('Run processed and locked', 'success'); renderPayroll(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+function showNewPayrollRun() {
+  showModal('New Payroll Run', `
+    <div class="form-grid">
+      <div class="form-group"><label>Period Start</label><input type="date" id="pr-start"></div>
+      <div class="form-group"><label>Period End</label><input type="date" id="pr-end"></div>
+      <div class="form-group"><label>Run Type</label><select id="pr-type"><option>Monthly</option><option>Bi-Weekly</option><option>Weekly</option><option>Supplementary</option></select></div>
+    </div>
+  `, [
+    { label:'Create Run', cls:'btn-primary', action: async () => {
+      const start = document.getElementById('pr-start').value;
+      const end   = document.getElementById('pr-end').value;
+      if (!start || !end) return showToast('Please select both dates', 'error');
+      try {
+        await POST('/data/payroll/payroll_runs', { period_start:start, period_end:end, run_type:document.getElementById('pr-type').value, status:'Draft' });
+        showToast('Payroll run created', 'success'); closeModal(); renderPayroll();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== LEAVE =====================
+async function renderLeave() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="lv-stats">
+      ${['Pending','Approved (this month)','Rejected (this month)','On Leave Now'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Leave Requests</div>
+        <div style="display:flex;gap:8px;">
+          <select id="lv-filter" onchange="loadLeave()" style="font-size:13px;width:130px;padding:6px 10px;">
+            <option value="">All status</option><option>Pending</option><option>Approved</option><option>Rejected</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="lv-tbody">${loadingTable(6)}</tbody></table></div>
+    </div>
+  `;
+  await loadLeave();
+}
+
+async function loadLeave() {
+  const filter = document.getElementById('lv-filter')?.value || '';
+  document.getElementById('lv-tbody').innerHTML = loadingTable(6);
+  try {
+    let qs = '?limit=20&sort=request_id&order=desc';
+    if (filter) qs += `&status=${encodeURIComponent(filter)}`;
+    const [all, pending, approved, rejected] = await Promise.all([
+      GET(`/data/payroll/leave_requests${qs}`),
+      GET('/data/payroll/leave_requests?status=Pending&limit=1'),
+      GET('/data/payroll/leave_requests?status=Approved&limit=1'),
+      GET('/data/payroll/leave_requests?status=Rejected&limit=1'),
+    ]);
+
+    document.getElementById('lv-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--warning);">${pending.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--success);">${approved.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" style="color:var(--danger);">${rejected.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Requests</div><div class="stat-value">${all.meta.total}</div></div>
+    `;
+
+    const sc = { Pending:'badge-warning', Approved:'badge-success', Rejected:'badge-danger' };
+    document.getElementById('lv-tbody').innerHTML = all.data.length === 0
+      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No requests found</td></tr>`
+      : all.data.map(l => `
+        <tr data-id="${l.request_id}">
+          <td class="td-main">#${l.employee_id}</td>
+          <td>${l.type_id||'—'}</td>
+          <td>${l.start_date?.slice(0,10)||'—'}</td>
+          <td>${l.end_date?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[l.status]||'badge-neutral'} badge-dot">${l.status}</span></td>
+          <td>
+            ${l.status==='Pending' ? `
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="approveLeave(${l.request_id})">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectLeave(${l.request_id})">Reject</button>
+              </div>` : `<span style="font-size:12px;color:var(--text3);">Processed</span>`}
+          </td>
+        </tr>
+      `).join('');
+
+    document.getElementById('leave-badge').textContent = pending.meta.total || '';
+  } catch(e) { showToast('Failed to load leave requests: ' + e.message, 'error'); }
+}
+
+async function approveLeave(id) {
+  try { await POST(`/workflows/leave-requests/${id}/approve`, {}); showToast('Leave approved', 'success'); loadLeave(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+async function rejectLeave(id) {
+  try { await POST(`/workflows/leave-requests/${id}/reject`, {}); showToast('Leave rejected', 'error'); loadLeave(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+function showNewLeave() {
+  showModal('New Leave Request', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="lr-emp" placeholder="Employee ID"></div>
+      <div class="form-group"><label>Leave Type ID</label><input type="number" id="lr-type" placeholder="Type ID from leave_types table"></div>
+      <div class="form-group"><label>From</label><input type="date" id="lr-from"></div>
+      <div class="form-group"><label>To</label><input type="date" id="lr-to"></div>
+    </div>
+  `, [
+    { label:'Submit', cls:'btn-primary', action: async () => {
+      const emp  = document.getElementById('lr-emp').value;
+      const type = document.getElementById('lr-type').value;
+      const from = document.getElementById('lr-from').value;
+      const to   = document.getElementById('lr-to').value;
+      if (!emp || !from || !to) return showToast('Employee, from, and to date are required', 'error');
+      try {
+        await POST('/data/payroll/leave_requests', { employee_id:+emp, type_id:type?+type:null, start_date:from, end_date:to, status:'Pending' });
+        showToast('Leave request submitted', 'success'); closeModal(); loadLeave();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+async function refreshLeaveBadge() {
+  try {
+    const res = await GET('/data/payroll/leave_requests?status=Pending&limit=1');
+    document.getElementById('leave-badge').textContent = res.meta.total || '';
+  } catch {}
+}
+
+// ===================== EXPENSES =====================
+async function renderExpenses() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="ex-stats">
+      ${['Pending Claims','Approved Total','Rejected','Total Claims'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Expense Claims</div>
+        <select id="ex-filter" onchange="loadExpenses()" style="font-size:13px;width:130px;padding:6px 10px;">
+          <option value="">All status</option><option>Pending</option><option>Approved</option><option>Rejected</option><option>Paid</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Amount</th><th>Category</th><th>Description</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="ex-tbody">${loadingTable(7)}</tbody></table></div>
+    </div>
+  `;
+  await loadExpenses();
+}
+
+async function loadExpenses() {
+  const filter = document.getElementById('ex-filter')?.value || '';
+  document.getElementById('ex-tbody').innerHTML = loadingTable(7);
+  try {
+    let qs = '?limit=20&sort=claim_id&order=desc';
+    if (filter) qs += `&status=${encodeURIComponent(filter)}`;
+    const [all, pending, approved, rejected] = await Promise.all([
+      GET(`/data/payroll/expense_claims${qs}`),
+      GET('/data/payroll/expense_claims?status=Pending&limit=1'),
+      GET('/data/payroll/expense_claims?status=Approved&limit=1'),
+      GET('/data/payroll/expense_claims?status=Rejected&limit=1'),
+    ]);
+
+    document.getElementById('ex-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" style="color:var(--warning);">${pending.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value" style="color:var(--success);">${approved.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value" style="color:var(--danger);">${rejected.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${all.meta.total}</div></div>
+    `;
+
+    const sc = { Pending:'badge-warning', Approved:'badge-success', Rejected:'badge-danger', Paid:'badge-info' };
+    document.getElementById('ex-tbody').innerHTML = all.data.length === 0
+      ? `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);">No claims found</td></tr>`
+      : all.data.map(e => `
+        <tr>
+          <td class="td-main">#${e.employee_id}</td>
+          <td style="font-family:var(--mono);">${e.amount||0} ETB</td>
+          <td>${e.category||'—'}</td>
+          <td>${e.description||'—'}</td>
+          <td>${e.created_at?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[e.status]||'badge-neutral'} badge-dot">${e.status}</span></td>
+          <td>
+            ${e.status==='Pending' ? `
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="approveExpense(${e.claim_id})">Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="rejectExpense(${e.claim_id})">Reject</button>
+              </div>` : `<span style="font-size:12px;color:var(--text3);">${e.status}</span>`}
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load expense claims: ' + e.message, 'error'); }
+}
+
+async function approveExpense(id) {
+  try { await POST(`/workflows/expense-claims/${id}/approve`, { status:'Approved' }); showToast('Expense approved', 'success'); loadExpenses(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+async function rejectExpense(id) {
+  try { await POST(`/workflows/expense-claims/${id}/approve`, { status:'Rejected' }); showToast('Expense rejected', 'error'); loadExpenses(); }
+  catch(e) { showToast(e.message, 'error'); }
+}
+
+function showAddExpense() {
+  showModal('Submit Expense Claim', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="ne-emp" placeholder="Employee ID"></div>
+      <div class="form-group"><label>Category</label><select id="ne-cat"><option>Travel</option><option>Office Supplies</option><option>Software</option><option>Training</option><option>Other</option></select></div>
+      <div class="form-group"><label>Amount (ETB)</label><input type="number" id="ne-amt" placeholder="0"></div>
+      <div class="form-group form-full"><label>Description</label><input id="ne-desc" placeholder="Brief description of expense"></div>
+    </div>
+  `, [
+    { label:'Submit', cls:'btn-primary', action: async () => {
+      const emp = document.getElementById('ne-emp').value;
+      const amt = document.getElementById('ne-amt').value;
+      if (!emp || !amt) return showToast('Employee ID and amount are required', 'error');
+      try {
+        await POST('/data/payroll/expense_claims', { employee_id:+emp, category:document.getElementById('ne-cat').value, amount:+amt, description:document.getElementById('ne-desc').value, status:'Pending' });
+        showToast('Claim submitted', 'success'); closeModal(); loadExpenses();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== RECRUITMENT =====================
+async function renderRecruitment() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="rc-stats">
+      ${['Total Candidates','Open Vacancies','Offer Stage','Hired (Total)'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Candidates</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Vacancy</th><th>Source</th><th>Actions</th></tr></thead>
+      <tbody id="rc-tbody">${loadingTable(5)}</tbody></table></div>
+    </div>
+  `;
+
+  try {
+    const [cands, vacs, hired] = await Promise.all([
+      GET('/data/recruitment/candidates?limit=20&sort=candidate_id&order=desc'),
+      GET('/data/recruitment/vacancies?status=Open&limit=1'),
+      GET('/data/recruitment/recruitment_results?status=Hired&limit=1'),
+    ]);
+
+    document.getElementById('rc-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">${cands.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Open Vacancies</div><div class="stat-value" style="color:var(--accent2);">${vacs.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Hired (Total)</div><div class="stat-value" style="color:var(--success);">${hired.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Showing</div><div class="stat-value">${cands.data.length}</div></div>
+    `;
+
+    document.getElementById('rc-tbody').innerHTML = cands.data.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No candidates yet</td></tr>`
+      : cands.data.map(c => `
+        <tr>
+          <td class="td-main">${c.f_name||''} ${c.l_name||''}</td>
+          <td>${c.email||'—'}</td>
+          <td>${c.vacancy_id ? '#'+c.vacancy_id : '—'}</td>
+          <td>${c.source||'—'}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-success btn-sm" onclick="showHireCandidate(${c.candidate_id},'${(c.f_name||'')+' '+(c.l_name||'')}')">Hire</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load recruitment: ' + e.message, 'error'); }
+}
+
+function showHireCandidate(candidateId, name) {
+  showModal(`Hire — ${name}`, `
+    <div style="background:var(--success-bg);border:1px solid rgba(62,207,142,0.2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--success);">
+      This will create an employee record for ${name}.
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label>Hire Date</label><input type="date" id="h-date"></div>
+      <div class="form-group"><label>Department ID</label><input type="number" id="h-dept" placeholder="Department ID"></div>
+      <div class="form-group"><label>Job ID</label><input type="number" id="h-job" placeholder="Job ID"></div>
+    </div>
+  `, [
+    { label:'Confirm Hire', cls:'btn-success', action: async () => {
+      try {
+        const res = await POST(`/workflows/recruitment/candidates/${candidateId}/hire`, {
+          hire_date: document.getElementById('h-date').value || undefined,
+          dept_id: document.getElementById('h-dept').value ? +document.getElementById('h-dept').value : undefined,
+          job_id:  document.getElementById('h-job').value  ? +document.getElementById('h-job').value  : undefined,
+        });
+        showToast(`${name} hired — Employee #${res.data.employee.employee_id} created`, 'success');
+        closeModal(); renderRecruitment();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showAddCandidate() {
+  showModal('Add Candidate', `
+    <div class="form-grid">
+      <div class="form-group"><label>First Name *</label><input id="ac-fn" placeholder="Nardos"></div>
+      <div class="form-group"><label>Last Name *</label><input id="ac-ln" placeholder="Abebe"></div>
+      <div class="form-group form-full"><label>Email</label><input type="email" id="ac-em" placeholder="candidate@email.com"></div>
+      <div class="form-group"><label>Source</label><select id="ac-src"><option>LinkedIn</option><option>Referral</option><option>Job Board</option><option>Agency</option><option>Direct</option></select></div>
+      <div class="form-group"><label>Vacancy ID</label><input type="number" id="ac-vac" placeholder="Optional"></div>
+    </div>
+  `, [
+    { label:'Add', cls:'btn-primary', action: async () => {
+      const fn = document.getElementById('ac-fn').value;
+      const ln = document.getElementById('ac-ln').value;
+      if (!fn) return showToast('First name is required', 'error');
+      try {
+        await POST('/data/recruitment/candidates', { f_name:fn, l_name:ln, email:document.getElementById('ac-em').value||null, source:document.getElementById('ac-src').value, vacancy_id:document.getElementById('ac-vac').value?+document.getElementById('ac-vac').value:null });
+        showToast(`${fn} ${ln} added to pipeline`, 'success'); closeModal(); renderRecruitment();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== GRIEVANCES =====================
+async function renderGrievances() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="gr-stats">
+      ${['Open Cases','In Review','Resolved (Total)','Total Cases'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Grievance Cases</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Category</th><th>Filed</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="gr-tbody">${loadingTable(5)}</tbody></table></div>
+    </div>
+  `;
+
+  try {
+    const [all, open, review, resolved] = await Promise.all([
+      GET('/data/org/grievances?limit=20&sort=grievance_id&order=desc'),
+      GET('/data/org/grievances?status=Open&limit=1'),
+      GET('/data/org/grievances?status=In+Review&limit=1'),
+      GET('/data/org/grievances?status=Resolved&limit=1'),
+    ]);
+
+    document.getElementById('gr-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" style="color:var(--danger);">${open.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">In Review</div><div class="stat-value" style="color:var(--warning);">${review.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value" style="color:var(--success);">${resolved.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${all.meta.total}</div></div>
+    `;
+
+    const sc = { Open:'badge-danger', 'In Review':'badge-warning', Resolved:'badge-success' };
+    document.getElementById('gr-tbody').innerHTML = all.data.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No grievances filed</td></tr>`
+      : all.data.map(g => `
+        <tr>
+          <td class="td-main">#${g.employee_id}</td>
+          <td>${g.category||'—'}</td>
+          <td>${g.filed_date?.slice(0,10)||g.created_at?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[g.status]||'badge-neutral'} badge-dot">${g.status}</span></td>
+          <td>
+            ${g.status !== 'Resolved' ? `<button class="btn btn-success btn-sm" onclick="showResolveGrievance(${g.grievance_id})">Resolve</button>` : `<span style="font-size:12px;color:var(--text3);">Resolved</span>`}
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load grievances: ' + e.message, 'error'); }
+}
+
+function showResolveGrievance(grievanceId) {
+  showModal('Resolve Grievance', `
+    <div class="form-group" style="margin-bottom:14px;"><label>Resolution Notes</label><textarea id="gr-notes" placeholder="Describe how the grievance was resolved…" style="min-height:100px;"></textarea></div>
+    <div class="form-group"><label>Resolution Date</label><input type="date" id="gr-date"></div>
+  `, [
+    { label:'Resolve', cls:'btn-success', action: async () => {
+      try {
+        await POST(`/workflows/grievances/${grievanceId}/resolve`, { status:'Resolved', resolution_notes:document.getElementById('gr-notes').value||null, resolution_date:document.getElementById('gr-date').value||null });
+        showToast('Grievance resolved', 'success'); closeModal(); renderGrievances();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showNewGrievance() {
+  showModal('File Grievance', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="ng-emp" placeholder="Employee ID"></div>
+      <div class="form-group"><label>Category</label><select id="ng-cat"><option>Workplace conflict</option><option>Policy violation</option><option>Compensation dispute</option><option>Harassment</option><option>Other</option></select></div>
+      <div class="form-group form-full"><label>Description</label><textarea id="ng-desc" placeholder="Describe the grievance in detail…"></textarea></div>
+    </div>
+  `, [
+    { label:'File', cls:'btn-primary', action: async () => {
+      const emp = document.getElementById('ng-emp').value;
+      if (!emp) return showToast('Employee ID is required', 'error');
+      try {
+        await POST('/data/org/grievances', { employee_id:+emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open' });
+        showToast('Grievance filed', 'success'); closeModal(); renderGrievances();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== ASSETS =====================
+async function renderAssets() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="as-stats">
+      ${['Total Assets','Assigned','Available','In Maintenance'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Asset Registry</div>
+        <select id="as-filter" onchange="loadAssets()" style="font-size:13px;width:130px;padding:6px 10px;">
+          <option value="">All status</option><option>Available</option><option>Assigned</option><option>Maintenance</option>
+        </select>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Asset</th><th>Serial No.</th><th>Type</th><th>Condition</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="as-tbody">${loadingTable(6)}</tbody></table></div>
+    </div>
+  `;
+  await loadAssets();
+}
+
+async function loadAssets() {
+  const filter = document.getElementById('as-filter')?.value || '';
+  document.getElementById('as-tbody').innerHTML = loadingTable(6);
+  try {
+    let qs = '?limit=20';
+    if (filter) qs += `&status=${encodeURIComponent(filter)}`;
+    const [all, avail, assigned, maint] = await Promise.all([
+      GET(`/data/org/assets${qs}`),
+      GET('/data/org/assets?status=Available&limit=1'),
+      GET('/data/org/assets?status=Assigned&limit=1'),
+      GET('/data/org/assets?status=Maintenance&limit=1'),
+    ]);
+
+    document.getElementById('as-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${all.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Assigned</div><div class="stat-value" style="color:var(--info);">${assigned.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Available</div><div class="stat-value" style="color:var(--success);">${avail.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Maintenance</div><div class="stat-value" style="color:var(--warning);">${maint.meta.total}</div></div>
+    `;
+
+    const sc = { Available:'badge-success', Assigned:'badge-info', Maintenance:'badge-warning' };
+    document.getElementById('as-tbody').innerHTML = all.data.length === 0
+      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No assets registered</td></tr>`
+      : all.data.map(a => `
+        <tr>
+          <td class="td-main">${a.asset_type||'Asset'} #${a.asset_id}</td>
+          <td><code style="font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">${a.serial_number||'—'}</code></td>
+          <td>${a.asset_type||'—'}</td>
+          <td>${a.condition||'—'}</td>
+          <td><span class="badge ${sc[a.status]||'badge-neutral'} badge-dot">${a.status}</span></td>
+          <td>
+            ${a.status==='Available'
+              ? `<button class="btn btn-primary btn-sm" onclick="showAssignAsset(${a.asset_id})">Assign</button>`
+              : `<button class="btn btn-secondary btn-sm" onclick="showToast('Return workflow — coming soon')">Return</button>`}
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load assets: ' + e.message, 'error'); }
+}
+
+function showAssignAsset(assetId) {
+  showModal('Assign Asset', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="aa-emp" placeholder="Employee ID"></div>
+      <div class="form-group form-full"><label>Assignment Date</label><input type="date" id="aa-date"></div>
+    </div>
+  `, [
+    { label:'Assign', cls:'btn-primary', action: async () => {
+      const emp = document.getElementById('aa-emp').value;
+      if (!emp) return showToast('Employee ID is required', 'error');
+      try {
+        await POST(`/workflows/assets/${assetId}/assign`, { employee_id:+emp, assigned_date:document.getElementById('aa-date').value||undefined });
+        showToast('Asset assigned', 'success'); closeModal(); loadAssets();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showAddAsset() {
+  showModal('Add New Asset', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Asset Type</label><select id="na-type"><option>Laptop</option><option>Monitor</option><option>Phone</option><option>Furniture</option><option>Vehicle</option><option>Other</option></select></div>
+      <div class="form-group"><label>Serial Number</label><input id="na-sn" placeholder="Optional"></div>
+      <div class="form-group"><label>Condition</label><select id="na-cond"><option>New</option><option>Excellent</option><option>Good</option><option>Fair</option></select></div>
+    </div>
+  `, [
+    { label:'Add Asset', cls:'btn-primary', action: async () => {
+      try {
+        await POST('/data/org/assets', { asset_type:document.getElementById('na-type').value, serial_number:document.getElementById('na-sn').value||null, condition:document.getElementById('na-cond').value, status:'Available' });
+        showToast('Asset added', 'success'); closeModal(); loadAssets();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== TRAINING =====================
+async function renderTraining() {
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Training Programs</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Title</th><th>Provider</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="tr-tbody">${loadingTable(6)}</tbody></table></div>
+    </div>
+  `;
+  try {
+    const res = await GET('/data/training/trainings?limit=20&sort=training_id&order=desc');
+    const sc = { Scheduled:'badge-info', 'In Progress':'badge-warning', Completed:'badge-success' };
+    document.getElementById('tr-tbody').innerHTML = res.data.length === 0
+      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No trainings yet</td></tr>`
+      : res.data.map(t => `
+        <tr>
+          <td class="td-main">${t.title||'—'}</td>
+          <td>${t.provider||'—'}</td>
+          <td>${t.start_date?.slice(0,10)||'—'}</td>
+          <td>${t.end_date?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[t.status]||'badge-neutral'} badge-dot">${t.status}</span></td>
+          <td>
+            ${t.status==='Completed'||t.status==='In Progress'
+              ? `<button class="btn btn-secondary btn-sm" onclick="showEvaluateTraining(${t.training_id})">Evaluate</button>`
+              : `<span style="font-size:12px;color:var(--text3);">Scheduled</span>`}
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load trainings: ' + e.message, 'error'); }
+}
+
+function showEvaluateTraining(trainingId) {
+  showModal('Evaluate Training', `
+    <div class="form-grid">
+      <div class="form-group"><label>Score (0–100)</label><input type="number" id="ev-score" min="0" max="100" placeholder="85"></div>
+      <div class="form-group"><label>Certificate Issued</label><select id="ev-cert"><option value="false">No</option><option value="true">Yes</option></select></div>
+      <div class="form-group"><label>Certificate Expiry</label><input type="date" id="ev-exp"></div>
+      <div class="form-group"><label>Completion Status</label><select id="ev-status"><option>Completed</option><option>Incomplete</option></select></div>
+    </div>
+  `, [
+    { label:'Save Evaluation', cls:'btn-primary', action: async () => {
+      try {
+        await POST(`/workflows/trainings/${trainingId}/evaluate`, {
+          score: document.getElementById('ev-score').value ? +document.getElementById('ev-score').value : null,
+          certificate_issued: document.getElementById('ev-cert').value === 'true',
+          certificate_expiry: document.getElementById('ev-exp').value || null,
+          training_status: document.getElementById('ev-status').value,
+        });
+        showToast('Training evaluation saved', 'success'); closeModal(); renderTraining();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showAddTraining() {
+  showModal('Add Training Program', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Title *</label><input id="nt-title" placeholder="e.g. Leadership Fundamentals"></div>
+      <div class="form-group form-full"><label>Provider</label><input id="nt-prov" placeholder="Trainer or organization"></div>
+      <div class="form-group"><label>Start Date</label><input type="date" id="nt-start"></div>
+      <div class="form-group"><label>End Date</label><input type="date" id="nt-end"></div>
+      <div class="form-group"><label>Location</label><input id="nt-loc" placeholder="Room / Online link"></div>
+    </div>
+  `, [
+    { label:'Create', cls:'btn-primary', action: async () => {
+      const title = document.getElementById('nt-title').value;
+      if (!title) return showToast('Title is required', 'error');
+      try {
+        await POST('/data/training/trainings', { title, provider:document.getElementById('nt-prov').value||null, start_date:document.getElementById('nt-start').value||null, end_date:document.getElementById('nt-end').value||null, location:document.getElementById('nt-loc').value||null, status:'Scheduled' });
+        showToast('Training created', 'success'); closeModal(); renderTraining();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== PERFORMANCE =====================
+async function renderPerformance() {
+  document.getElementById('content').innerHTML = `
+    <div class="stats-grid" id="pf-stats">
+      ${['Active Plans','Goals Tracked','Reviews Due','Closed Plans'].map(l=>`
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+      `).join('')}
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Performance Plans</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Period</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="pf-tbody">${loadingTable(4)}</tbody></table></div>
+    </div>
+  `;
+  try {
+    const [plans, goals, closed] = await Promise.all([
+      GET('/data/performance/performance_plans?limit=20&sort=plan_id&order=desc'),
+      GET('/data/performance/performance_goals?limit=1'),
+      GET('/data/performance/performance_plans?plan_status=Closed&limit=1'),
+    ]);
+    const active = plans.data.filter(p => p.plan_status !== 'Closed').length;
+    document.getElementById('pf-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-label">Active Plans</div><div class="stat-value">${active}</div></div>
+      <div class="stat-card"><div class="stat-label">Goals Tracked</div><div class="stat-value">${goals.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Plans</div><div class="stat-value">${plans.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Closed</div><div class="stat-value" style="color:var(--success);">${closed.meta.total}</div></div>
+    `;
+    const sc = { Active:'badge-info', Closed:'badge-success', Draft:'badge-neutral' };
+    document.getElementById('pf-tbody').innerHTML = plans.data.length === 0
+      ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No plans yet</td></tr>`
+      : plans.data.map(p => `
+        <tr>
+          <td class="td-main">#${p.employee_id}</td>
+          <td>${p.start_date?.slice(0,10)||'—'} → ${p.end_date?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[p.plan_status]||'badge-neutral'} badge-dot">${p.plan_status}</span></td>
+          <td>
+            ${p.plan_status!=='Closed'?`<button class="btn btn-secondary btn-sm" onclick="closePlan(${p.plan_id})">Close Plan</button>`:'<span style="font-size:12px;color:var(--text3);">Closed</span>'}
+          </td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load performance: ' + e.message, 'error'); }
+}
+
+async function closePlan(planId) {
+  try {
+    const res = await POST(`/workflows/performance/plans/${planId}/close`, {});
+    showToast(`Plan closed. Overall rating: ${res.data.overall_rating}%`, 'success');
+    renderPerformance();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function showNewReview() {
+  showModal('New Performance Plan', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="np-emp" placeholder="Employee ID"></div>
+      <div class="form-group"><label>Start Date</label><input type="date" id="np-start"></div>
+      <div class="form-group"><label>End Date</label><input type="date" id="np-end"></div>
+    </div>
+  `, [
+    { label:'Create Plan', cls:'btn-primary', action: async () => {
+      const emp = document.getElementById('np-emp').value;
+      const start = document.getElementById('np-start').value;
+      const end = document.getElementById('np-end').value;
+      if (!emp || !start || !end) return showToast('All fields required', 'error');
+      try {
+        await POST('/data/performance/performance_plans', { employee_id:+emp, start_date:start, end_date:end, plan_status:'Active' });
+        showToast('Performance plan created', 'success'); closeModal(); renderPerformance();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== ONBOARDING =====================
+async function renderOnboarding() {
+  document.getElementById('content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Onboarding Checklists</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Created</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="ob-tbody">${loadingTable(4)}</tbody></table></div>
+    </div>
+  `;
+  try {
+    const res = await GET('/data/org/onboarding_checklists?limit=20&sort=checklist_id&order=desc');
+    const sc = { In_Progress:'badge-warning', Completed:'badge-success' };
+    document.getElementById('ob-tbody').innerHTML = res.data.length === 0
+      ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No onboarding records</td></tr>`
+      : res.data.map(o => `
+        <tr>
+          <td class="td-main">#${o.employee_id}</td>
+          <td>${o.created_at?.slice(0,10)||'—'}</td>
+          <td><span class="badge ${sc[o.status]||'badge-neutral'} badge-dot">${o.status}</span></td>
+          <td><button class="btn btn-secondary btn-sm" onclick="viewChecklist(${o.checklist_id})">View Tasks</button></td>
+        </tr>
+      `).join('');
+  } catch(e) { showToast('Failed to load onboarding: ' + e.message, 'error'); }
+}
+
+async function viewChecklist(checklistId) {
+  try {
+    const res = await GET(`/data/org/onboarding_tasks?checklist_id=${checklistId}`);
+    showModal('Onboarding Tasks', `
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        ${res.data.length === 0 ? '<div style="color:var(--text3);text-align:center;">No tasks</div>' : res.data.map(t => `
+          <div style="display:flex;align-items:center;gap:12px;padding:10px;background:var(--bg3);border-radius:8px;">
+            <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${t.status==='Done'?'var(--success)':'var(--border2)'};background:${t.status==='Done'?'var(--success-bg)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              ${t.status==='Done'?`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>`:''}
+            </div>
+            <span style="font-size:13px;flex:1;${t.status==='Done'?'color:var(--text3);text-decoration:line-through;':''}">${t.task_name||'Task'}</span>
+            ${t.status!=='Done' ? `<button class="btn btn-success btn-sm" onclick="completeTask(${t.task_id})">Complete</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+    `, [{ label:'Close', cls:'btn-secondary', action:closeModal }]);
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function completeTask(taskId) {
+  try {
+    await POST(`/workflows/onboarding/tasks/${taskId}/complete`, {});
+    showToast('Task marked complete', 'success');
+    closeModal();
+    renderOnboarding();
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+function showNewOnboarding() {
+  showModal('Start Onboarding', `
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="no-emp" placeholder="Employee ID"></div>
+      <div class="form-group form-full"><label>Due Date</label><input type="date" id="no-due"></div>
+      <div class="form-group form-full"><label>Tasks (one per line)</label><textarea id="no-tasks" placeholder="Submit national ID&#10;Sign employment contract&#10;Setup email account&#10;Office tour&#10;Policy briefing"></textarea></div>
+    </div>
+  `, [
+    { label:'Create Checklist', cls:'btn-primary', action: async () => {
+      const emp = document.getElementById('no-emp').value;
+      if (!emp) return showToast('Employee ID is required', 'error');
+      const tasks = document.getElementById('no-tasks').value.split('\n').map(t=>t.trim()).filter(Boolean);
+      try {
+        await POST('/workflows/onboarding/checklists', { employee_id:+emp, task_names:tasks.length?tasks:undefined, due_date:document.getElementById('no-due').value||undefined });
+        showToast('Onboarding checklist created', 'success'); closeModal(); renderOnboarding();
+      } catch(e) { showToast(e.message, 'error'); }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+// ===================== AUDIT LOGS =====================
+async function renderAudit() {
+  document.getElementById('content').innerHTML = `
+    <div class="card" style="margin-bottom:16px;padding:14px 20px;">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <select id="au-action" onchange="loadAudit()" style="width:130px;font-size:13px;padding:6px 10px;">
+          <option value="">All actions</option><option>INSERT</option><option>UPDATE</option><option>DELETE</option>
+        </select>
+        <input type="date" id="au-from" onchange="loadAudit()" style="width:150px;" title="From date">
+        <input type="date" id="au-to" onchange="loadAudit()" style="width:150px;" title="To date">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">Audit Logs</div><div class="card-sub">All system mutations are recorded here</div></div></div>
+      <div class="table-wrap"><table><thead><tr><th>#</th><th>Timestamp</th><th>User</th><th>Action</th><th>Table</th><th>Record</th></tr></thead>
+      <tbody id="au-tbody">${loadingTable(6)}</tbody></table></div>
+      <div style="padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:12px;color:var(--text3);" id="au-count">Loading…</span>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm" id="au-prev" onclick="changeAuditPage(-1)">← Previous</button>
+          <button class="btn btn-secondary btn-sm" id="au-next" onclick="changeAuditPage(1)">Next →</button>
+        </div>
+      </div>
+    </div>
+  `;
+  window._auditPage = 1;
+  await loadAudit();
+}
+
+async function loadAudit() {
+  const action = document.getElementById('au-action')?.value || '';
+  const page = window._auditPage || 1;
+  document.getElementById('au-tbody').innerHTML = loadingTable(6);
+  try {
+    let qs = `?limit=20&page=${page}&sort=log_id&order=desc`;
+    if (action) qs += `&action_type=${encodeURIComponent(action)}`;
+    const res = await GET(`/data/auth/audit_logs${qs}`);
+    const ac = { INSERT:'badge-success', DELETE:'badge-danger', UPDATE:'badge-info' };
+    document.getElementById('au-tbody').innerHTML = res.data.length === 0
+      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No logs found</td></tr>`
+      : res.data.map(a => `
+        <tr>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.log_id}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;">${a.time_stamp ? new Date(a.time_stamp).toLocaleString() : '—'}</td>
+          <td class="td-main" style="font-size:12px;">${a.user_id||'system'}</td>
+          <td><span class="badge ${ac[a.action_type]||'badge-neutral'} badge-dot">${a.action_type}</span></td>
+          <td><code style="font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">${a.table_name}</code></td>
+          <td style="font-size:12px;color:var(--text3);">#${a.record_id||'—'}</td>
+        </tr>
+      `).join('');
+    document.getElementById('au-count').textContent = `${res.meta.total} total events · page ${page}`;
+    document.getElementById('au-prev').disabled = page <= 1;
+    document.getElementById('au-next').disabled = res.data.length < 20;
+  } catch(e) { showToast('Failed to load audit logs: ' + e.message, 'error'); }
+}
+
+function changeAuditPage(dir) {
+  window._auditPage = Math.max(1, (window._auditPage||1) + dir);
+  loadAudit();
+}
+
+// ===================== MODAL =====================
+function showModal(title, body, buttons = []) {
+  document.getElementById('modal-container').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">${title}</div>
+          <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <div id="modal-body">${body}</div>
+        <div class="modal-footer">
+          ${buttons.map((b,i) => `<button class="btn ${b.cls}" id="mb-${i}">${b.label}</button>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+  buttons.forEach((b,i) => document.getElementById(`mb-${i}`).addEventListener('click', b.action));
+}
+
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+
+// ===================== TOAST =====================
+function showToast(msg, type = 'success') {
+  const icons = { success:'✓', error:'✕', warning:'⚠' };
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<span style="color:var(--${type==='error'?'danger':type==='warning'?'warning':'success'})">${icons[type]||'ℹ'}</span> ${msg}`;
+  document.getElementById('toast').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ===================== INIT =====================
+// Restore session on page reload
+if (authToken) {
+  GET('/auth/me').then(data => {
+    currentUser = data.data;
+    enterApp();
+  }).catch(() => {
+    // Token expired or invalid — clear it and show login
+    sessionStorage.removeItem('hr_token');
+    authToken = null;
+  });
+}
+</script>
+</body>
+</html>

@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const env = require('./config/env');
 const routes = require('./routes');
 const { notFound, errorHandler } = require('./middleware/errorHandler');
+const path = require('path');
 
 const app = express();
 
@@ -17,6 +18,12 @@ app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
+app.use(express.static(path.join(__dirname, '../public')));
+
+// serve index.html for any non-API route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'index.html'));
+});
 
 app.get('/health', (req, res) => {
   res.json({
