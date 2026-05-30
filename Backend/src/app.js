@@ -13,23 +13,19 @@ if (env.nodeEnv === 'production') {
   app.set('trust proxy', 1);
 }
 
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));  
 app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(express.static(path.join(__dirname, '../public')));
 
-// serve index.html for any non-API route
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
 app.get('/health', (req, res) => {
-  res.json({
-    success: true,
-    message: 'HR Operations Management API is running'
-  });
+  res.json({ success: true, message: 'HR Operations Management API is running' });
 });
 
 app.use('/api/v1', routes);
