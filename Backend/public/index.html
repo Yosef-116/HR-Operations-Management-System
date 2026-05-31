@@ -446,7 +446,7 @@ async function renderDashboard() {
     const [empRes, leaveRes, auditRes, expRes] = await Promise.all([
       GET('/data/org/employee?limit=1'),
       GET('/data/payroll/leave_requests?status=Pending&limit=5'),
-      GET('/data/auth/audit_logs?limit=5&sort=time_stamp&order=desc'),
+      GET('/data/hr_auth/audit_logs?limit=5&sort=log_id&order=desc'),
       GET('/data/payroll/expense_claims?status=Pending&limit=4'),
     ]);
 
@@ -497,7 +497,7 @@ async function renderDashboard() {
         <td class="td-main" style="font-size:12px;">${a.user_id || '—'}</td>
         <td><span class="badge ${a.action_type==='INSERT'?'badge-success':a.action_type==='DELETE'?'badge-danger':'badge-info'} badge-dot">${a.action_type}</span></td>
         <td><code style="font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">${a.table_name}</code></td>
-        <td style="font-size:11px;color:var(--text3);">${a.time_stamp ? new Date(a.time_stamp).toLocaleString() : '—'}</td>
+        <td style="font-size:11px;color:var(--text3);">${a.timestamp ? new Date(a.timestamp).toLocaleString() : '—'}</td>
       </tr>
     `).join('');
   } catch(e) {
@@ -750,7 +750,7 @@ async function renderPayroll() {
       <div class="stat-card"><div class="stat-label">Total Runs</div><div class="stat-value">${runs.meta.total}</div></div>
       <div class="stat-card"><div class="stat-label">Active Employees</div><div class="stat-value">${emp.meta.total}</div></div>
       <div class="stat-card"><div class="stat-label">Pending Runs</div><div class="stat-value" style="color:var(--warning);">${pending}</div></div>
-      <div class="stat-card"><div class="stat-label">Last Run Period</div><div class="stat-value" style="font-size:16px;line-height:1.4;">${last ? (last.period_start?.slice(0,7)||'—') : 'None'}</div></div>
+      <div class="stat-card"><div class="stat-label">Last Run Date</div><div class="stat-value" style="font-size:16px;line-height:1.4;">${last ? (last.run_date?.slice(0,10)||'—') : 'None'}</div></div>
     `;
 
     const sc = { Draft:'badge-neutral', Approved:'badge-info', Processed:'badge-success' };
@@ -758,7 +758,7 @@ async function renderPayroll() {
       ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No payroll runs yet</td></tr>`
       : runs.data.map(r => `
         <tr>
-          <td class="td-main">${r.period_start?.slice(0,7)||'—'} → ${r.period_end?.slice(0,7)||'—'}</td>
+          <td class="td-main">${r.run_date?.slice(0,10)||'—'}</td>
           <td>${r.run_type||'—'}</td>
           <td><span class="badge ${sc[r.status]||'badge-neutral'} badge-dot">${r.status}</span></td>
           <td style="font-size:11px;color:var(--text3);">${r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
@@ -793,17 +793,15 @@ async function processRun(runId) {
 function showNewPayrollRun() {
   showModal('New Payroll Run', `
     <div class="form-grid">
-      <div class="form-group"><label>Period Start</label><input type="date" id="pr-start"></div>
-      <div class="form-group"><label>Period End</label><input type="date" id="pr-end"></div>
+      <div class="form-group form-full"><label>Run Date</label><input type="date" id="pr-date"></div>
       <div class="form-group"><label>Run Type</label><select id="pr-type"><option>Monthly</option><option>Bi-Weekly</option><option>Weekly</option><option>Supplementary</option></select></div>
     </div>
   `, [
     { label:'Create Run', cls:'btn-primary', action: async () => {
-      const start = document.getElementById('pr-start').value;
-      const end   = document.getElementById('pr-end').value;
-      if (!start || !end) return showToast('Please select both dates', 'error');
+      const date  = document.getElementById('pr-date').value;
+      if (!date) return showToast('Please select a run date', 'error');
       try {
-        await POST('/data/payroll/payroll_runs', { period_start:start, period_end:end, run_type:document.getElementById('pr-type').value, status:'Draft' });
+        await POST('/data/payroll/payroll_runs', { run_date: date, status:'Draft' });
         showToast('Payroll run created', 'success'); closeModal(); renderPayroll();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -1146,7 +1144,7 @@ async function renderGrievances() {
         <tr>
           <td class="td-main">#${g.employee_id}</td>
           <td>${g.category||'—'}</td>
-          <td>${g.filed_date?.slice(0,10)||g.created_at?.slice(0,10)||'—'}</td>
+          <td>${g.submitted_date?.slice(0,10)||g.created_at?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[g.status]||'badge-neutral'} badge-dot">${g.status}</span></td>
           <td>
             ${g.status !== 'Resolved' ? `<button class="btn btn-success btn-sm" onclick="showResolveGrievance(${g.grievance_id})">Resolve</button>` : `<span style="font-size:12px;color:var(--text3);">Resolved</span>`}
@@ -1183,7 +1181,7 @@ function showNewGrievance() {
       const emp = document.getElementById('ng-emp').value;
       if (!emp) return showToast('Employee ID is required', 'error');
       try {
-        await POST('/data/org/grievances', { employee_id:+emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open' });
+        await POST('/data/org/grievances', { employee_id:+emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open', submitted_date: new Date().toISOString().slice(0,10) });
         showToast('Grievance filed', 'success'); closeModal(); renderGrievances();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -1399,7 +1397,7 @@ async function renderPerformance() {
       : plans.data.map(p => `
         <tr>
           <td class="td-main">#${p.employee_id}</td>
-          <td>${p.start_date?.slice(0,10)||'—'} → ${p.end_date?.slice(0,10)||'—'}</td>
+          <td>${p.period_start?.slice(0,10)||'—'} → ${p.period_end?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[p.plan_status]||'badge-neutral'} badge-dot">${p.plan_status}</span></td>
           <td>
             ${p.plan_status!=='Closed'?`<button class="btn btn-secondary btn-sm" onclick="closePlan(${p.plan_id})">Close Plan</button>`:'<span style="font-size:12px;color:var(--text3);">Closed</span>'}
@@ -1421,17 +1419,19 @@ function showNewReview() {
   showModal('New Performance Plan', `
     <div class="form-grid">
       <div class="form-group form-full"><label>Employee ID</label><input type="number" id="np-emp" placeholder="Employee ID"></div>
-      <div class="form-group"><label>Start Date</label><input type="date" id="np-start"></div>
-      <div class="form-group"><label>End Date</label><input type="date" id="np-end"></div>
+      <div class="form-group"><label>Year</label><input type="number" id="np-year" placeholder="2024" value="${new Date().getFullYear()}"></div>
+      <div class="form-group"><label>Period Start</label><input type="date" id="np-start"></div>
+      <div class="form-group"><label>Period End</label><input type="date" id="np-end"></div>
     </div>
   `, [
     { label:'Create Plan', cls:'btn-primary', action: async () => {
       const emp = document.getElementById('np-emp').value;
+      const year = document.getElementById('np-year').value;
       const start = document.getElementById('np-start').value;
       const end = document.getElementById('np-end').value;
-      if (!emp || !start || !end) return showToast('All fields required', 'error');
+      if (!emp || !start || !end || !year) return showToast('All fields required', 'error');
       try {
-        await POST('/data/performance/performance_plans', { employee_id:+emp, start_date:start, end_date:end, plan_status:'Active' });
+        await POST('/data/performance/performance_plans', { employee_id:+emp, year:+year, period_start:start, period_end:end, plan_status:'Active' });
         showToast('Performance plan created', 'success'); closeModal(); renderPerformance();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -1549,14 +1549,14 @@ async function loadAudit() {
   try {
     let qs = `?limit=20&page=${page}&sort=log_id&order=desc`;
     if (action) qs += `&action_type=${encodeURIComponent(action)}`;
-    const res = await GET(`/data/auth/audit_logs${qs}`);
+    const res = await GET(`/data/hr_auth/audit_logs${qs}`);
     const ac = { INSERT:'badge-success', DELETE:'badge-danger', UPDATE:'badge-info' };
     document.getElementById('au-tbody').innerHTML = res.data.length === 0
       ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No logs found</td></tr>`
       : res.data.map(a => `
         <tr>
           <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.log_id}</td>
-          <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;">${a.time_stamp ? new Date(a.time_stamp).toLocaleString() : '—'}</td>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--text3);white-space:nowrap;">${a.timestamp ? new Date(a.timestamp).toLocaleString() : '—'}</td>
           <td class="td-main" style="font-size:12px;">${a.user_id||'system'}</td>
           <td><span class="badge ${ac[a.action_type]||'badge-neutral'} badge-dot">${a.action_type}</span></td>
           <td><code style="font-family:var(--mono);font-size:11px;background:var(--bg3);padding:2px 6px;border-radius:4px;">${a.table_name}</code></td>
