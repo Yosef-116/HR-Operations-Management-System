@@ -13,18 +13,8 @@ if (env.nodeEnv === 'production') {
   app.set('trust proxy', 1);
 }
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'", "'unsafe-inline'"],
-      styleSrc:   ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-      fontSrc:    ["'self'", "https://fonts.gstatic.com"],
-      connectSrc: ["'self'"],
-      imgSrc:     ["'self'", "data:"],
-    }
-  }
-}));app.use(cors({ origin: env.corsOrigin }));
+app.use(helmet());
+app.use(cors({ origin: env.corsOrigin }));
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan(env.nodeEnv === 'production' ? 'combined' : 'dev'));
