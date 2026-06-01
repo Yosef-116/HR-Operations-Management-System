@@ -8,25 +8,25 @@ const CORE_ROLES = [
     'manage_performance', 'manage_training', 'manage_shared',
     'approve_leave', 'approve_promotion', 'resolve_grievance',
     'process_exit',
-    'view_payroll',      // ← ADD: so they can list leave/expense/payslips
+    'view_payroll',      
     ]
   },
   { roleName: 'Finance', permissions: [
     'manage_payroll', 'approve_expense', 'process_payroll', 'view_payroll',
-    'view_org',          // ← ADD: so they can look up employees
-    'view_recruitment',  // ← ADD: so they can look up job titles
+    'view_org',          
+    'view_recruitment',  
     ]
   },
   { roleName: 'Manager', permissions: [
     'view_org', 'view_performance', 'edit_performance',
     'approve_leave', 'approve_expense', 'approve_promotion',
-    'view_payroll',      // ← ADD: so they can list pending leave/expenses
+    'view_payroll',      
     ]
   },
   { roleName: 'Employee', permissions: [
     'view_self', 'request_leave', 'submit_expense', 'view_shared',
-    'view_org',          // ← ADD: so they can read their own employee record
-    'create_payroll',    // ← ADD: so they can POST leave requests and expense claims
+    'view_org',          
+    'create_payroll',    
     ]
   }
 ];

@@ -200,6 +200,3 @@ The app is deployed on **[Render](https://render.com)**. The `start` script (`no
 
 ---
 
-## Author
-
-**Yosef Hassen** — [@Yosef-116](https://github.com/Yosef-116)
