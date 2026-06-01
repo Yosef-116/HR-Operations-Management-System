@@ -241,6 +241,10 @@ textarea{resize:vertical;min-height:80px}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
         Audit Logs
       </a>
+      <a class="nav-item" onclick="navigate('roles',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Manage Roles
+      </a>
     </div>
     <div class="sidebar-user">
       <div class="avatar" id="sidebar-avatar">AD</div>
@@ -289,6 +293,35 @@ const API = '/api/v1';
 let authToken = sessionStorage.getItem('hr_token') || null;
 let currentUser = null;
 let currentPage = 'dashboard';
+
+
+// ===================== LOOKUP CACHE =====================
+// Stores name lookups so we do not re-fetch on every render
+const _cache = {};
+
+const loadLookups = async () => {
+  try {
+    const [depts, jobs, leaveTypes, offices, employees, vacancies] = await Promise.all([
+      GET("/data/org/departments?limit=500"),
+      GET("/data/recruitment/job_titles?limit=500"),
+      GET("/data/payroll/leave_types?limit=500"),
+      GET("/data/org/offices?limit=500"),
+      GET("/data/org/employee?limit=500"),
+      GET("/data/recruitment/vacancies?limit=500"),
+    ]);
+    _cache.depts      = Object.fromEntries(depts.data.map(d => [d.dept_id,      d.dept_name]));
+    _cache.jobs       = Object.fromEntries(jobs.data.map(j  => [j.job_id,       j.title_name]));
+    _cache.leaveTypes = Object.fromEntries(leaveTypes.data.map(t => [t.type_id, t.name]));
+    _cache.offices    = Object.fromEntries(offices.data.map(o => [o.office_id,  o.location_name]));
+    _cache.employees  = Object.fromEntries(employees.data.map(e => [e.employee_id, e.f_name + " " + e.l_name]));
+  } catch(e) { console.warn("Lookups failed:", e.message); }
+};
+
+const deptName   = id => (_cache.depts    && _cache.depts[id])      || (id ? "Dept #"+id    : "—");
+const jobName    = id => (_cache.jobs     && _cache.jobs[id])       || (id ? "Job #"+id     : "—");
+const leaveName  = id => (_cache.leaveTypes && _cache.leaveTypes[id]) || (id ? "Type #"+id  : "—");
+const officeName = id => (_cache.offices  && _cache.offices[id])    || (id ? "Office #"+id  : "—");
+const empName    = id => (_cache.employees && _cache.employees[id]) || (id ? "Emp #"+id     : "—");
 
 // ===================== HTTP HELPER =====================
 // All API calls go through here — attaches the token and normalises errors
@@ -379,6 +412,7 @@ function enterApp() {
   document.getElementById('sidebar-name').textContent = displayName;
   document.getElementById('sidebar-role').textContent = currentUser.roles?.[0] || 'Employee';
   document.getElementById('sidebar-avatar').textContent = displayName.split(' ').map(w => w[0]).slice(0,2).join('');
+  loadLookups();
   navigate('dashboard');
   refreshLeaveBadge();
 }
@@ -393,7 +427,7 @@ function handleLogout() {
 }
 
 // ===================== NAVIGATION =====================
-const PAGE_TITLES = { dashboard:'Dashboard', employees:'Employees', payroll:'Payroll', expenses:'Expense Claims', leave:'Leave Requests', recruitment:'Recruitment', performance:'Performance', training:'Training', assets:'Assets', grievances:'Grievances', onboarding:'Onboarding', audit:'Audit Logs' };
+const PAGE_TITLES = { dashboard:'Dashboard', employees:'Employees', payroll:'Payroll', expenses:'Expense Claims', leave:'Leave Requests', recruitment:'Recruitment', performance:'Performance', training:'Training', assets:'Assets', grievances:'Grievances', onboarding:'Onboarding', audit:'Audit Logs', roles:'Manage Roles' };
 const PAGE_CTA    = { employees:'Add Employee', payroll:'New Payroll Run', expenses:'Submit Expense', leave:'New Request', recruitment:'Add Candidate', training:'Add Training', assets:'Add Asset', grievances:'File Grievance', onboarding:'Start Onboarding', performance:'New Review' };
 
 function navigate(page, el) {
@@ -404,7 +438,7 @@ function navigate(page, el) {
   const ctaBtn = document.getElementById('topbar-cta');
   if (PAGE_CTA[page]) { ctaBtn.style.display = ''; ctaBtn.lastChild.textContent = ' ' + PAGE_CTA[page]; }
   else ctaBtn.style.display = 'none';
-  const renders = { dashboard:renderDashboard, employees:renderEmployees, payroll:renderPayroll, expenses:renderExpenses, leave:renderLeave, recruitment:renderRecruitment, performance:renderPerformance, training:renderTraining, assets:renderAssets, grievances:renderGrievances, onboarding:renderOnboarding, audit:renderAudit };
+  const renders = { dashboard:renderDashboard, employees:renderEmployees, payroll:renderPayroll, expenses:renderExpenses, leave:renderLeave, recruitment:renderRecruitment, performance:renderPerformance, training:renderTraining, assets:renderAssets, grievances:renderGrievances, onboarding:renderOnboarding, audit:renderAudit, roles:renderRoles };
   if (renders[page]) renders[page]();
 }
 
@@ -465,7 +499,7 @@ async function renderDashboard() {
       leaveEl.innerHTML = leaveRes.data.map(l => `
         <div class="activity-item">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;">Employee #${l.employee_id} — ${l.type_id ? 'Leave type '+l.type_id : 'Leave'}</div>
+            <div style="font-size:13px;font-weight:500;">${empName(l.employee_id)} — ${leaveName(l.type_id)}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">${l.start_date} → ${l.end_date}</div>
           </div>
           <div style="display:flex;gap:6px;">
@@ -483,7 +517,7 @@ async function renderDashboard() {
       expEl.innerHTML = expRes.data.map(e => `
         <div class="activity-item">
           <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;">Employee #${e.employee_id} — ${e.category||'Expense'}</div>
+            <div style="font-size:13px;font-weight:500;">${empName(e.employee_id)} — ${e.category||'Expense'}</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">${e.description||''} · ${e.amount} ETB</div>
           </div>
           <button class="btn btn-success btn-sm" onclick="quickApproveExpense(${e.claim_id})">Approve</button>
@@ -581,8 +615,8 @@ async function loadEmployees() {
               </div>
             </div>
           </td>
-          <td>${e.dept_id||'—'}</td>
-          <td>${e.job_id||'—'}</td>
+          <td>${deptName(e.dept_id)}</td>
+          <td>${jobName(e.job_id)}</td>
           <td><span class="badge ${statusColors[e.employment_status]||'badge-neutral'} badge-dot">${e.employment_status||'—'}</span></td>
           <td>${e.hire_date ? e.hire_date.slice(0,10) : '—'}</td>
           <td>
@@ -618,7 +652,7 @@ function viewEmployee(e) {
       </div>
     </div>
     <div class="grid-2" style="gap:12px;">
-      ${[['Employee ID','#'+e.employee_id],['Hire Date',e.hire_date?.slice(0,10)||'—'],['Dept ID',e.dept_id||'—'],['Job ID',e.job_id||'—'],['Gender',e.gender||'—'],['National ID',e.national_id||'—']].map(([l,v])=>`
+      ${[['Employee ID','#'+e.employee_id],['Hire Date',e.hire_date?.slice(0,10)||'—'],['Department',deptName(e.dept_id)],['Job Title',jobName(e.job_id)],['Gender',e.gender||'—'],['National ID',e.national_id||'—']].map(([l,v])=>`
         <div style="background:var(--bg3);padding:12px;border-radius:8px;"><div style="font-size:11px;color:var(--text3);margin-bottom:4px;">${l}</div><div style="font-size:13px;font-weight:500;">${v}</div></div>
       `).join('')}
     </div>
@@ -857,8 +891,8 @@ async function loadLeave() {
       ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No requests found</td></tr>`
       : all.data.map(l => `
         <tr data-id="${l.request_id}">
-          <td class="td-main">#${l.employee_id}</td>
-          <td>${l.type_id||'—'}</td>
+          <td class="td-main">${empName(l.employee_id)}</td>
+          <td>${leaveName(l.type_id)}</td>
           <td>${l.start_date?.slice(0,10)||'—'}</td>
           <td>${l.end_date?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[l.status]||'badge-neutral'} badge-dot">${l.status}</span></td>
@@ -962,7 +996,7 @@ async function loadExpenses() {
       ? `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text3);">No claims found</td></tr>`
       : all.data.map(e => `
         <tr>
-          <td class="td-main">#${e.employee_id}</td>
+          <td class="td-main">${empName(e.employee_id)}</td>
           <td style="font-family:var(--mono);">${e.amount||0} ETB</td>
           <td>${e.category||'—'}</td>
           <td>${e.description||'—'}</td>
@@ -1142,7 +1176,7 @@ async function renderGrievances() {
       ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No grievances filed</td></tr>`
       : all.data.map(g => `
         <tr>
-          <td class="td-main">#${g.employee_id}</td>
+          <td class="td-main">${empName(g.employee_id)}</td>
           <td>${g.category||'—'}</td>
           <td>${g.submitted_date?.slice(0,10)||g.created_at?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[g.status]||'badge-neutral'} badge-dot">${g.status}</span></td>
@@ -1396,7 +1430,7 @@ async function renderPerformance() {
       ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No plans yet</td></tr>`
       : plans.data.map(p => `
         <tr>
-          <td class="td-main">#${p.employee_id}</td>
+          <td class="td-main">${empName(p.employee_id)}</td>
           <td>${p.period_start?.slice(0,10)||'—'} → ${p.period_end?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[p.plan_status]||'badge-neutral'} badge-dot">${p.plan_status}</span></td>
           <td>
@@ -1455,7 +1489,7 @@ async function renderOnboarding() {
       ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No onboarding records</td></tr>`
       : res.data.map(o => `
         <tr>
-          <td class="td-main">#${o.employee_id}</td>
+          <td class="td-main">${empName(o.employee_id)}</td>
           <td>${o.created_at?.slice(0,10)||'—'}</td>
           <td><span class="badge ${sc[o.status]||'badge-neutral'} badge-dot">${o.status}</span></td>
           <td><button class="btn btn-secondary btn-sm" onclick="viewChecklist(${o.checklist_id})">View Tasks</button></td>
@@ -1572,6 +1606,78 @@ async function loadAudit() {
 function changeAuditPage(dir) {
   window._auditPage = Math.max(1, (window._auditPage||1) + dir);
   loadAudit();
+}
+
+// ===================== ROLES =====================
+async function renderRoles() {
+  document.getElementById("content").innerHTML = `
+    <div class="grid-2" style="gap:18px;">
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">Assign Role to Employee</div><div class="card-sub">Use Register endpoint to create accounts with specific roles</div></div></div>
+        <div class="form-grid" style="gap:14px;">
+          <div class="form-group form-full"><label>Employee Email (must exist in org.employee)</label><input id="ra-email" type="email" placeholder="employee@company.com"></div>
+          <div class="form-group form-full"><label>Username</label><input id="ra-user" placeholder="e.g. tigist.haile"></div>
+          <div class="form-group"><label>Password</label><input id="ra-pw" type="password" placeholder="Min 8 characters"></div>
+          <div class="form-group"><label>Role</label>
+            <select id="ra-role">
+              <option value="HR_Manager">HR Manager</option>
+              <option value="Finance">Finance</option>
+              <option value="Manager">Manager</option>
+              <option value="Employee">Employee</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-full"><button class="btn btn-primary" style="width:100%;" onclick="assignRole()">Create Account with Role</button></div>
+        </div>
+        <div id="ra-result" style="margin-top:14px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Existing User Accounts</div></div>
+        <div class="table-wrap"><table><thead><tr><th>Username</th><th>Employee</th><th>Active</th><th>Last Login</th></tr></thead>
+        <tbody id="roles-tbody"><tr class="loading-row"><td colspan="4"><div class="spinner" style="margin:0 auto;"></div></td></tr></tbody></table></div>
+      </div>
+    </div>
+  `;
+  try {
+    const res = await GET("/data/hr_auth/user_accounts?limit=50&sort=user_id&order=asc");
+    document.getElementById("roles-tbody").innerHTML = res.data.length === 0
+      ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text3);">No accounts yet</td></tr>`
+      : res.data.map(u => `
+        <tr>
+          <td class="td-main">${u.username}</td>
+          <td>${empName(u.employee_id)}</td>
+          <td><span class="badge ${u.is_active ? "badge-success" : "badge-neutral"} badge-dot">${u.is_active ? "Active" : "Inactive"}</span></td>
+          <td style="font-size:11px;color:var(--text3);">${u.last_login ? new Date(u.last_login).toLocaleDateString() : "Never"}</td>
+        </tr>
+      `).join("");
+  } catch(e) { showToast("Failed to load accounts: " + e.message, "error"); }
+}
+
+async function assignRole() {
+  const email = document.getElementById("ra-email").value.trim();
+  const username = document.getElementById("ra-user").value.trim();
+  const password = document.getElementById("ra-pw").value;
+  const role = document.getElementById("ra-role").value;
+  if (!email || !username || !password) return showToast("All fields are required", "error");
+  if (password.length < 8) return showToast("Password must be at least 8 characters", "error");
+  const resultEl = document.getElementById("ra-result");
+  resultEl.innerHTML = "";
+  try {
+    const empRes = await GET(`/data/org/employee?search=${encodeURIComponent(email)}&limit=5`);
+    const emp = empRes.data.find(e => e.email && e.email.toLowerCase() === email.toLowerCase());
+    if (!emp) {
+      resultEl.innerHTML = `<div class="error-banner">No employee found with email ${email}. Add them to org.employee first.</div>`;
+      return;
+    }
+    await POST("/auth/register", { employee_id: emp.employee_id, username, password, role_names: [role] });
+    showToast(`Account created for ${emp.f_name} ${emp.l_name} with role ${role}`, "success");
+    document.getElementById("ra-email").value = "";
+    document.getElementById("ra-user").value = "";
+    document.getElementById("ra-pw").value = "";
+    renderRoles();
+  } catch(e) {
+    resultEl.innerHTML = `<div class="error-banner">${e.message}</div>`;
+  }
 }
 
 // ===================== MODAL =====================
