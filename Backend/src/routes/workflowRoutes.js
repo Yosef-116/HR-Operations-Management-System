@@ -28,6 +28,7 @@ router.post('/onboarding/checklists', requireAnyPermission(['manage_org']), work
 router.post('/onboarding/tasks/:taskId/complete', requireAnyPermission(['manage_org']), workflowController.completeOnboardingTask);
 
 router.post('/employees/:employeeId/exit', requireAnyPermission(['process_exit', 'manage_org']), workflowController.exitEmployee);
+router.post('/grievances', requireAnyPermission(['view_self', 'manage_org', 'resolve_grievance']), workflowController.fileGrievance);
 router.post('/grievances/:grievanceId/resolve', requireAnyPermission(['resolve_grievance', 'manage_org']), workflowController.resolveGrievance);
 
 router.post('/recruitment/candidates/:candidateId/hire', requireAnyPermission(['manage_recruitment']), workflowController.hireCandidate);

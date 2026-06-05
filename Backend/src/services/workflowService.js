@@ -430,6 +430,41 @@ const exitEmployee = async (employeeId, payload, reqMeta) => db.withTransaction(
   };
 });
 
+const fileGrievance = async (payload, reqMeta) => db.withTransaction(async (client) => {
+  if (!reqMeta.employeeId) {
+    throw new AppError('Your account is not linked to an employee record', 403);
+  }
+
+  if (!payload.description || !String(payload.description).trim()) {
+    throw new AppError('Grievance description is required', 400);
+  }
+
+  const employee = await fetchOne(
+    client,
+    `SELECT employee_id
+     FROM org.employee
+     WHERE employee_id = $1
+       AND COALESCE(is_deleted, false) = false`,
+    [reqMeta.employeeId],
+    'Employee record not found'
+  );
+
+  const result = await client.query(
+    `INSERT INTO org.grievances (employee_id, submitted_date, category, description, status)
+     VALUES ($1, $2, $3, $4, 'Open')
+     RETURNING *`,
+    [
+      employee.employee_id,
+      payload.submitted_date || today(),
+      payload.category || 'Other',
+      String(payload.description).trim()
+    ]
+  );
+
+  await audit(client, reqMeta, 'INSERT', 'org.grievances', result.rows[0].grievance_id, null, result.rows[0]);
+  return result.rows[0];
+});
+
 const resolveGrievance = async (grievanceId, payload, reqMeta) => db.withTransaction(async (client) => {
   const oldGrievance = await fetchOne(client, 'SELECT * FROM org.grievances WHERE grievance_id = $1', [grievanceId], 'Grievance not found');
   const result = await client.query(
@@ -735,6 +770,7 @@ module.exports = {
   createOnboardingChecklist,
   completeOnboardingTask,
   exitEmployee,
+  fileGrievance,
   resolveGrievance,
   hireCandidate,
   assessPromotion,

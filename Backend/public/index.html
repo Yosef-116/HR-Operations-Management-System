@@ -1204,18 +1204,21 @@ function showResolveGrievance(grievanceId) {
 }
 
 function showNewGrievance() {
+  if (!currentUser?.employee_id) {
+    return showToast('Your account is not linked to an employee record', 'error');
+  }
+
   showModal('File Grievance', `
     <div class="form-grid">
-      <div class="form-group form-full"><label>Employee ID</label><input type="number" id="ng-emp" placeholder="Employee ID"></div>
       <div class="form-group"><label>Category</label><select id="ng-cat"><option>Workplace conflict</option><option>Policy violation</option><option>Compensation dispute</option><option>Harassment</option><option>Other</option></select></div>
       <div class="form-group form-full"><label>Description</label><textarea id="ng-desc" placeholder="Describe the grievance in detail…"></textarea></div>
     </div>
   `, [
     { label:'File', cls:'btn-primary', action: async () => {
-      const emp = document.getElementById('ng-emp').value;
-      if (!emp) return showToast('Employee ID is required', 'error');
+      const description = document.getElementById('ng-desc').value.trim();
+      if (!description) return showToast('Description is required', 'error');
       try {
-        await POST('/data/org/grievances', { employee_id:+emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open', submitted_date: new Date().toISOString().slice(0,10) });
+        await POST('/workflows/grievances', { category:document.getElementById('ng-cat').value, description });
         showToast('Grievance filed', 'success'); closeModal(); renderGrievances();
       } catch(e) { showToast(e.message, 'error'); }
     }},

@@ -895,6 +895,16 @@ const workflowFolders = () => ({
       name: 'Employee Relations & Exit',
       item: [
         request({
+          name: 'File My Grievance',
+          method: 'POST',
+          url: urlFor('/api/v1/workflows/grievances'),
+          body: {
+            category: 'Other',
+            description: 'Self-service grievance filed from Postman'
+          },
+          events: savePathEvent('grievanceId', 'data.grievance_id', [201])
+        }),
+        request({
           name: 'Resolve Grievance',
           method: 'POST',
           url: urlFor('/api/v1/workflows/grievances/{{grievanceId}}/resolve'),

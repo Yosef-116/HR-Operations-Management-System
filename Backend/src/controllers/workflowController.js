@@ -76,6 +76,12 @@ module.exports = {
     201
   )),
 
+  fileGrievance: asyncHandler(async (req, res) => ok(
+    res,
+    await workflowService.fileGrievance(req.body, reqMeta(req)),
+    201
+  )),
+
   resolveGrievance: asyncHandler(async (req, res) => ok(
     res,
     await workflowService.resolveGrievance(req.params.grievanceId, req.body, reqMeta(req))

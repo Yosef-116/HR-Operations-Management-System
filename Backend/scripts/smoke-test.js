@@ -75,12 +75,25 @@ const main = async () => {
       }
     });
 
-    await request(baseUrl, 'POST', '/api/v1/auth/login', {
+    const employeeLogin = await request(baseUrl, 'POST', '/api/v1/auth/login', {
       body: {
         email: employeeEmail,
         password: employeePassword
       }
     });
+
+    const employeeToken = employeeLogin.data.token;
+    const grievance = await request(baseUrl, 'POST', '/api/v1/workflows/grievances', {
+      token: employeeToken,
+      body: {
+        category: 'Other',
+        description: 'Smoke test self-service grievance'
+      }
+    });
+
+    if (grievance.data.employee_id !== createdEmployee.data.employee_id) {
+      throw new Error('Self-service grievance did not use the logged-in employee id');
+    }
 
     const createdOffice = await request(baseUrl, 'POST', '/api/v1/data/org/offices', {
       token,
