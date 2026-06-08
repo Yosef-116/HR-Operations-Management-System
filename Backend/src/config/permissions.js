@@ -7,8 +7,8 @@ const CORE_ROLES = [
     'manage_org', 'manage_recruitment', 'manage_people',
     'manage_performance', 'manage_training', 'manage_shared',
     'approve_leave', 'approve_promotion', 'resolve_grievance',
-    'process_exit',
-    'view_payroll',      
+    'process_exit', 'create_payroll', 'approve_expense',
+    'view_payroll', 'view_recruitment',
     ]
   },
   { roleName: 'Finance', permissions: [

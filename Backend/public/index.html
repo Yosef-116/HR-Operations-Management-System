@@ -1200,42 +1200,58 @@ async function renderRecruitment() {
       `).join('')}
     </div>
     <div class="card">
-      <div class="card-header"><div class="card-title">Candidates</div></div>
-      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Vacancy</th><th>Source</th><th>Actions</th></tr></thead>
-      <tbody id="rc-tbody">${loadingTable(5)}</tbody></table></div>
+      <div class="card-header"><div class="card-title">Candidates in Pipeline</div><div class="card-sub">Excludes already hired candidates</div></div>
+      <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Vacancy</th><th>Source</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="rc-tbody">${loadingTable(6)}</tbody></table></div>
     </div>
   `;
 
   try {
-    const [cands, vacs, hired] = await Promise.all([
-      GET('/data/recruitment/candidates?limit=20&sort=candidate_id&order=desc'),
+    const [allCands, vacs, hired, results] = await Promise.all([
+      GET('/data/recruitment/candidates?limit=500&sort=candidate_id&order=desc'),
       GET('/data/recruitment/vacancies?status=Open&limit=1'),
       GET('/data/recruitment/recruitment_results?status=Hired&limit=1'),
+      GET('/data/recruitment/recruitment_results?limit=500'),
     ]);
 
+    const hiredCandidateIds = new Set();
+    results.data.forEach(r => {
+      if (r.status === 'Hired') hiredCandidateIds.add(r.candidate_id);
+    });
+
+    const cands = {
+      data: allCands.data.filter(c => !hiredCandidateIds.has(c.candidate_id)),
+      meta: { total: allCands.data.filter(c => !hiredCandidateIds.has(c.candidate_id)).length }
+    };
+
     document.getElementById('rc-stats').innerHTML = `
-      <div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">${cands.meta.total}</div></div>
+      <div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value">${cands.meta.total}</div></div>
       <div class="stat-card"><div class="stat-label">Open Vacancies</div><div class="stat-value" style="color:var(--accent2);">${vacs.meta.total}</div></div>
       <div class="stat-card"><div class="stat-label">Hired (Total)</div><div class="stat-value" style="color:var(--success);">${hired.meta.total}</div></div>
       <div class="stat-card"><div class="stat-label">Showing</div><div class="stat-value">${cands.data.length}</div></div>
     `;
 
     document.getElementById('rc-tbody').innerHTML = cands.data.length === 0
-      ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No candidates yet</td></tr>`
-      : cands.data.map(c => `
+      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text3);">No candidates yet</td></tr>`
+      : cands.data.map(c => {
+        const statusMap = { 'Hired': 'badge-success', 'Rejected': 'badge-danger', 'Interview': 'badge-warning', 'Offer': 'badge-info' };
+        const candStatus = results.data.find(r => r.candidate_id === c.candidate_id)?.status || 'Pipeline';
+        const badgeClass = statusMap[candStatus] || 'badge-neutral';
+        return `
         <tr>
           <td class="td-main">${c.f_name||''} ${c.l_name||''}</td>
           <td>${c.email||'—'}</td>
           <td>${c.vacancy_id ? '#'+c.vacancy_id : '—'}</td>
           <td>${c.source||'—'}</td>
+          <td><span class="badge ${badgeClass} badge-dot">${candStatus}</span></td>
           <td>
             <div style="display:flex;gap:6px;">
               <button class="btn btn-success btn-sm" onclick="showHireCandidate(${c.candidate_id},'${(c.f_name||'')+' '+(c.l_name||'')}')">Hire</button>
             </div>
           </td>
         </tr>
-      `).join('');
-  } catch(e) { showTableError('rc-tbody', 5, e, 'recruitment'); }
+      `}).join('');
+  } catch(e) { showTableError('rc-tbody', 6, e, 'recruitment'); }
 }
 
 function showHireCandidate(candidateId, name) {
