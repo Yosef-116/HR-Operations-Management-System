@@ -120,6 +120,14 @@ textarea{resize:vertical;min-height:80px}
 .notif-dot{width:8px;height:8px;background:var(--danger);border-radius:50%;border:2px solid var(--bg2);position:absolute;top:6px;right:6px}
 .spinner{width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 0.6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.skeleton{background:linear-gradient(90deg,var(--bg3) 25%,var(--bg4) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:6px;height:32px;width:60%}
+.skeleton-sm{height:12px;width:40%;margin-top:6px;border-radius:4px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.access-denied{background:var(--bg2);border:1px solid rgba(245,101,101,0.2);border-radius:var(--radius-lg);padding:40px 32px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:20px}
+.access-denied-icon{width:52px;height:52px;background:var(--danger-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.access-denied-title{font-size:16px;font-weight:600;color:var(--text)}
+.access-denied-desc{font-size:13px;color:var(--text2);max-width:440px;line-height:1.65}
+.access-denied-role{display:inline-block;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:3px 10px;font-size:12px;font-family:var(--mono);color:var(--accent2);margin-top:2px}
 #toast{position:fixed;bottom:24px;right:24px;z-index:999;display:flex;flex-direction:column;gap:8px}
 .toast-item{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;max-width:320px;display:flex;align-items:center;gap:10px;animation:slideIn 0.2s ease;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 .toast-item.success{border-color:rgba(62,207,142,0.3)}
@@ -430,6 +438,61 @@ function handleLogout() {
 }
 
 // ===================== NAVIGATION =====================
+// ===================== ERROR HELPERS =====================
+const PAGE_NAMES = {
+  dashboard:'Dashboard', employees:'Employees', payroll:'Payroll',
+  expenses:'Expense Claims', leave:'Leave Requests', recruitment:'Recruitment',
+  performance:'Performance', training:'Training', assets:'Assets',
+  grievances:'Grievances', onboarding:'Onboarding', audit:'Audit Logs'
+};
+
+const friendlyError = (err, page) => {
+  const msg = err.message || '';
+  const role = currentUser?.roles?.[0] || 'your role';
+  const pageName = PAGE_NAMES[page] || page || 'this section';
+
+  if (err.status === 403 || msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('missing permission')) {
+    return `
+      <div class="access-denied">
+        <div class="access-denied-icon">🔒</div>
+        <div class="access-denied-title">Access Restricted</div>
+        <div class="access-denied-desc">
+          Your current role <span class="access-denied-role">${role}</span> does not have the necessary permissions to view the <strong>${pageName}</strong> section.
+          <br><br>
+          If you believe this is an error or you require access for your duties, please contact your system administrator or HR department.
+        </div>
+      </div>`;
+  }
+
+  if (err.status === 401) {
+    return `
+      <div class="access-denied">
+        <div class="access-denied-icon">⏱</div>
+        <div class="access-denied-title">Session Expired</div>
+        <div class="access-denied-desc">Your session has timed out for security reasons. Please sign out and sign back in to continue.</div>
+        <button class="btn btn-primary" onclick="handleLogout()">Sign back in</button>
+      </div>`;
+  }
+
+  return `
+    <div class="access-denied" style="border-color:rgba(245,166,35,0.2);">
+      <div class="access-denied-icon" style="background:var(--warning-bg);">⚠</div>
+      <div class="access-denied-title">Unable to load ${pageName}</div>
+      <div class="access-denied-desc">${msg || 'We encountered an unexpected problem while loading this data. Please try again.'}</div>
+      <button class="btn btn-secondary btn-sm" onclick="navigate('${page}')">Try again</button>
+    </div>`;
+};
+
+const showPageError = (targetId, err, page) => {
+  const el = document.getElementById(targetId);
+  if (el) el.innerHTML = friendlyError(err, page);
+};
+
+const showTableError = (tbodyId, cols, err, page) => {
+  const el = document.getElementById(tbodyId);
+  if (el) el.innerHTML = `<tr><td colspan="${cols}">${friendlyError(err, page)}</td></tr>`;
+};
+
 const PAGE_TITLES = { dashboard:'Dashboard', employees:'Employees', payroll:'Payroll', expenses:'Expense Claims', leave:'Leave Requests', recruitment:'Recruitment', performance:'Performance', training:'Training', assets:'Assets', grievances:'Grievances', onboarding:'Onboarding', audit:'Audit Logs', roles:'Manage Roles' };
 const PAGE_CTA    = { employees:'Add Employee', payroll:'New Payroll Run', expenses:'Submit Expense', leave:'New Request', recruitment:'Add Candidate', training:'Add Training', assets:'Add Asset', grievances:'File Grievance', onboarding:'Start Onboarding', performance:'New Review' };
 
@@ -452,7 +515,7 @@ function topbarAction() {
 
 // ===================== LOADING STATE HELPER =====================
 function loadingTable(cols) {
-  return `<tr class="loading-row"><td colspan="${cols}"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
+  return `<tr><td colspan="${cols}" style="padding:48px;"><div style="display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--text3);"><div class="spinner"></div><div style="font-size:12px;">Fetching records...</div></div></td></tr>`;
 }
 
 // ===================== DASHBOARD =====================
@@ -460,17 +523,17 @@ async function renderDashboard() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="dash-stats">
       ${['Total Employees','On Leave Today','Open Positions','Payroll (Last Run)'].map(l => `
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="grid-2" style="gap:18px;margin-bottom:20px;">
       <div class="card">
         <div class="card-header"><div><div class="card-title">Pending Leave Requests</div><div class="card-sub">Awaiting your approval</div></div></div>
-        <div id="dash-leave-pending">Loading…</div>
+        <div id="dash-leave-pending" style="min-height:100px;display:flex;align-items:center;justify-content:center;"><div class="spinner"></div></div>
       </div>
       <div class="card">
         <div class="card-header"><div><div class="card-title">Recent Expense Claims</div><div class="card-sub">Pending approval</div></div></div>
-        <div id="dash-expense-pending">Loading…</div>
+        <div id="dash-expense-pending" style="min-height:100px;display:flex;align-items:center;justify-content:center;"><div class="spinner"></div></div>
       </div>
     </div>
     <div class="card">
@@ -538,7 +601,7 @@ async function renderDashboard() {
       </tr>
     `).join('');
   } catch(e) {
-    showToast('Failed to load dashboard data: ' + e.message, 'error');
+    showToast('Dashboard data restricted: contact admin for permissions.', 'warning');
   }
 }
 
@@ -635,7 +698,7 @@ async function loadEmployees() {
     document.getElementById('emp-prev').disabled = page <= 1;
     document.getElementById('emp-next').disabled = res.data.length < 15;
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="6"><div class="error-banner">⚠ ${e.message}</div></td></tr>`;
+    showTableError('emp-tbody', 6, e, 'employees');
   }
 }
 
@@ -763,7 +826,7 @@ async function renderPayroll() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="pr-stats">
       ${['YTD Payroll','Employees on Payroll','Pending Runs','Last Run'].map(l => `
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -795,10 +858,10 @@ async function renderPayroll() {
       ? `<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text3);">No payroll runs yet</td></tr>`
       : runs.data.map(r => `
         <tr>
-          <td class="td-main">${r.run_date?.slice(0,7)||'—'}</td>
+          <td class="td-main">${r.run_date?.slice(0,10)||'—'}</td>
           <td>${r.run_type||'—'}</td>
           <td><span class="badge ${sc[r.status]||'badge-neutral'} badge-dot">${r.status}</span></td>
-          <td>${r.created_at?.slice(0,10)||'—'}</td>
+          <td style="font-size:11px;color:var(--text3);">${r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'}</td>
           <td>
             <div style="display:flex;gap:6px;">
               ${r.status==='Draft' ? `<button class="btn btn-success btn-sm" onclick="generatePayslips(${r.run_id})">Generate Payslips</button><button class="btn btn-primary btn-sm" onclick="approveRun(${r.run_id})">Approve</button>` : ''}
@@ -808,7 +871,7 @@ async function renderPayroll() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load payroll: ' + e.message, 'error'); }
+  } catch(e) { showTableError('pr-tbody', 5, e, 'payroll'); }
 }
 
 async function generatePayslips(runId) {
@@ -851,7 +914,7 @@ async function renderLeave() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="lv-stats">
       ${['Pending','Approved (this month)','Rejected (this month)','On Leave Now'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -910,7 +973,7 @@ async function loadLeave() {
       `).join('');
 
     document.getElementById('leave-badge').textContent = pending.meta.total || '';
-  } catch(e) { showToast('Failed to load leave requests: ' + e.message, 'error'); }
+  } catch(e) { showTableError('lv-tbody', 6, e, 'leave'); }
 }
 
 async function approveLeave(id) {
@@ -923,32 +986,26 @@ async function rejectLeave(id) {
 }
 
 function showNewLeave() {
-  const isAdmin = currentUser.roles?.some(r => ['Admin', 'HR_Manager'].includes(r));
-  const empId = currentUser.employee_id;
-  
-  let employeeField = '';
-  if (isAdmin) {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><select id="lr-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>`;
-  } else {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><input type="text" value="${empName(empId)}" disabled><input type="hidden" id="lr-emp" value="${empId}"></div>`;
-  }
-
   showModal('New Leave Request', `
     <div class="form-grid">
-      ${employeeField}
-      <div class="form-group"><label>Leave Type</label><select id="lr-type">${_cache.rawLeaveTypes?.map(t => `<option value="${t.type_id}">${t.name}</option>`).join('')}</select></div>
+      <div class="form-group form-full" style="background:var(--bg3);border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Requesting as</div>
+        <div style="font-size:13px;font-weight:500;">${empName(currentUser?.employee_id)} <span style="color:var(--text3);font-size:11px;">(you)</span></div>
+      </div>
+      <div class="form-group"><label>Leave Type</label><select id="lr-type">${Object.entries(_cache.leaveTypes||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('') || '<option value="">— load types first —</option>'}</select></div>
       <div class="form-group"><label>From</label><input type="date" id="lr-from"></div>
       <div class="form-group"><label>To</label><input type="date" id="lr-to"></div>
     </div>
   `, [
     { label:'Submit', cls:'btn-primary', action: async () => {
-      const emp  = document.getElementById('lr-emp').value;
+      const emp  = currentUser?.employee_id;
       const type = document.getElementById('lr-type').value;
       const from = document.getElementById('lr-from').value;
       const to   = document.getElementById('lr-to').value;
-      if (!emp || !from || !to) return showToast('All fields are required', 'error');
+      if (!emp) return showToast('Could not determine your employee record. Please contact admin.', 'error');
+      if (!from || !to) return showToast('Please select both from and to dates', 'error');
       try {
-        await POST('/data/payroll/leave_requests', { employee_id:+emp, type_id:type?+type:null, start_date:from, end_date:to, status:'Pending' });
+        await POST('/data/payroll/leave_requests', { employee_id:emp, type_id:type?+type:null, start_date:from, end_date:to, status:'Pending' });
         showToast('Leave request submitted', 'success'); closeModal(); loadLeave();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -968,7 +1025,7 @@ async function renderExpenses() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="ex-stats">
       ${['Pending Claims','Approved Total','Rejected','Total Claims'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -1024,7 +1081,7 @@ async function loadExpenses() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load expense claims: ' + e.message, 'error'); }
+  } catch(e) { showTableError('ex-tbody', 7, e, 'expenses'); }
 }
 
 async function approveExpense(id) {
@@ -1037,30 +1094,24 @@ async function rejectExpense(id) {
 }
 
 function showAddExpense() {
-  const isAdmin = currentUser.roles?.some(r => ['Admin', 'HR_Manager', 'Finance'].includes(r));
-  const empId = currentUser.employee_id;
-  
-  let employeeField = '';
-  if (isAdmin) {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><select id="ne-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>`;
-  } else {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><input type="text" value="${empName(empId)}" disabled><input type="hidden" id="ne-emp" value="${empId}"></div>`;
-  }
-
   showModal('Submit Expense Claim', `
     <div class="form-grid">
-      ${employeeField}
+      <div class="form-group form-full" style="background:var(--bg3);border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Claiming as</div>
+        <div style="font-size:13px;font-weight:500;">${empName(currentUser?.employee_id)} <span style="color:var(--text3);font-size:11px;">(you)</span></div>
+      </div>
       <div class="form-group"><label>Category</label><select id="ne-cat"><option>Travel</option><option>Office Supplies</option><option>Software</option><option>Training</option><option>Other</option></select></div>
       <div class="form-group"><label>Amount (ETB)</label><input type="number" id="ne-amt" placeholder="0"></div>
       <div class="form-group form-full"><label>Description</label><input id="ne-desc" placeholder="Brief description of expense"></div>
     </div>
   `, [
     { label:'Submit', cls:'btn-primary', action: async () => {
-      const emp = document.getElementById('ne-emp').value;
+      const emp = currentUser?.employee_id;
       const amt = document.getElementById('ne-amt').value;
-      if (!emp || !amt) return showToast('Employee and amount are required', 'error');
+      if (!emp) return showToast('Could not determine your employee record. Please contact admin.', 'error');
+      if (!amt) return showToast('Amount is required', 'error');
       try {
-        await POST('/data/payroll/expense_claims', { employee_id:+emp, category:document.getElementById('ne-cat').value, amount:+amt, description:document.getElementById('ne-desc').value, status:'Pending' });
+        await POST('/data/payroll/expense_claims', { employee_id:emp, category:document.getElementById('ne-cat').value, amount:+amt, description:document.getElementById('ne-desc').value, status:'Pending' });
         showToast('Claim submitted', 'success'); closeModal(); loadExpenses();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -1073,7 +1124,7 @@ async function renderRecruitment() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="rc-stats">
       ${['Total Candidates','Open Vacancies','Offer Stage','Hired (Total)'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -1112,7 +1163,7 @@ async function renderRecruitment() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load recruitment: ' + e.message, 'error'); }
+  } catch(e) { showTableError('rc-tbody', 5, e, 'recruitment'); }
 }
 
 function showHireCandidate(candidateId, name) {
@@ -1122,8 +1173,8 @@ function showHireCandidate(candidateId, name) {
     </div>
     <div class="form-grid">
       <div class="form-group"><label>Hire Date</label><input type="date" id="h-date"></div>
-      <div class="form-group"><label>Department</label><select id="h-dept">${_cache.rawDepts?.map(d => `<option value="${d.dept_id}">${d.dept_name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Job Title</label><select id="h-job">${_cache.rawJobs?.map(j => `<option value="${j.job_id}">${j.title_name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Department</label><select id="h-dept">${Object.entries(_cache.depts||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Job Title</label><select id="h-job">${Object.entries(_cache.jobs||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
     </div>
   `, [
     { label:'Confirm Hire', cls:'btn-success', action: async () => {
@@ -1169,7 +1220,7 @@ async function renderGrievances() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="gr-stats">
       ${['Open Cases','In Review','Resolved (Total)','Total Cases'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -1208,7 +1259,7 @@ async function renderGrievances() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load grievances: ' + e.message, 'error'); }
+  } catch(e) { showTableError('gr-tbody', 5, e, 'grievances'); }
 }
 
 function showResolveGrievance(grievanceId) {
@@ -1227,28 +1278,21 @@ function showResolveGrievance(grievanceId) {
 }
 
 function showNewGrievance() {
-  const isAdmin = currentUser.roles?.some(r => ['Admin', 'HR_Manager'].includes(r));
-  const empId = currentUser.employee_id;
-  
-  let employeeField = '';
-  if (isAdmin) {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><select id="ng-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>`;
-  } else {
-    employeeField = `<div class="form-group form-full"><label>Employee</label><input type="text" value="${empName(empId)}" disabled><input type="hidden" id="ng-emp" value="${empId}"></div>`;
-  }
-
   showModal('File Grievance', `
     <div class="form-grid">
-      ${employeeField}
+      <div class="form-group form-full" style="background:var(--bg3);border-radius:8px;padding:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Filing as</div>
+        <div style="font-size:13px;font-weight:500;">${empName(currentUser?.employee_id)} <span style="color:var(--text3);font-size:11px;">(you)</span></div>
+      </div>
       <div class="form-group"><label>Category</label><select id="ng-cat"><option>Workplace conflict</option><option>Policy violation</option><option>Compensation dispute</option><option>Harassment</option><option>Other</option></select></div>
       <div class="form-group form-full"><label>Description</label><textarea id="ng-desc" placeholder="Describe the grievance in detail…"></textarea></div>
     </div>
   `, [
     { label:'File', cls:'btn-primary', action: async () => {
-      const emp = document.getElementById('ng-emp').value;
-      if (!emp) return showToast('Employee is required', 'error');
+      const emp = currentUser?.employee_id;
+      if (!emp) return showToast('Could not determine your employee record. Please contact admin.', 'error');
       try {
-        await POST('/data/org/grievances', { employee_id:+emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open', submitted_date: new Date().toISOString().slice(0,10) });
+        await POST('/data/org/grievances', { employee_id:emp, category:document.getElementById('ng-cat').value, description:document.getElementById('ng-desc').value, status:'Open', submitted_date: new Date().toISOString().slice(0,10) });
         showToast('Grievance filed', 'success'); closeModal(); renderGrievances();
       } catch(e) { showToast(e.message, 'error'); }
     }},
@@ -1261,7 +1305,7 @@ async function renderAssets() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="as-stats">
       ${['Total Assets','Assigned','Available','In Maintenance'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -1314,13 +1358,13 @@ async function loadAssets() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load assets: ' + e.message, 'error'); }
+  } catch(e) { showTableError('as-tbody', 6, e, 'assets'); }
 }
 
 function showAssignAsset(assetId) {
   showModal('Assign Asset', `
     <div class="form-grid">
-      <div class="form-group form-full"><label>Employee</label><select id="aa-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>
+      <div class="form-group form-full"><label>Employee</label><select id="aa-emp">${Object.entries(_cache.employees||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
       <div class="form-group form-full"><label>Assignment Date</label><input type="date" id="aa-date"></div>
     </div>
   `, [
@@ -1382,7 +1426,7 @@ async function renderTraining() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load trainings: ' + e.message, 'error'); }
+  } catch(e) { showTableError('tr-tbody', 6, e, 'training'); }
 }
 
 function showEvaluateTraining(trainingId) {
@@ -1431,7 +1475,7 @@ async function renderPerformance() {
   document.getElementById('content').innerHTML = `
     <div class="stats-grid" id="pf-stats">
       ${['Active Plans','Goals Tracked','Reviews Due','Closed Plans'].map(l=>`
-        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value"><div class="spinner" style="width:20px;height:20px;margin-top:4px;"></div></div></div>
+        <div class="stat-card"><div class="stat-label">${l}</div><div class="stat-value" style="margin-top:8px;"><div class="skeleton"></div><div class="skeleton skeleton-sm"></div></div></div>
       `).join('')}
     </div>
     <div class="card">
@@ -1466,7 +1510,7 @@ async function renderPerformance() {
           </td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load performance: ' + e.message, 'error'); }
+  } catch(e) { showTableError('pf-tbody', 4, e, 'performance'); }
 }
 
 async function closePlan(planId) {
@@ -1480,7 +1524,7 @@ async function closePlan(planId) {
 function showNewReview() {
   showModal('New Performance Plan', `
     <div class="form-grid">
-      <div class="form-group form-full"><label>Employee</label><select id="np-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>
+      <div class="form-group form-full"><label>Employee</label><select id="np-emp">${Object.entries(_cache.employees||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
       <div class="form-group"><label>Year</label><input type="number" id="np-year" placeholder="2024" value="${new Date().getFullYear()}"></div>
       <div class="form-group"><label>Period Start</label><input type="date" id="np-start"></div>
       <div class="form-group"><label>Period End</label><input type="date" id="np-end"></div>
@@ -1523,7 +1567,7 @@ async function renderOnboarding() {
           <td><button class="btn btn-secondary btn-sm" onclick="viewChecklist(${o.checklist_id})">View Tasks</button></td>
         </tr>
       `).join('');
-  } catch(e) { showToast('Failed to load onboarding: ' + e.message, 'error'); }
+  } catch(e) { showTableError('ob-tbody', 4, e, 'onboarding'); }
 }
 
 async function viewChecklist(checklistId) {
@@ -1557,7 +1601,7 @@ async function completeTask(taskId) {
 function showNewOnboarding() {
   showModal('Start Onboarding', `
     <div class="form-grid">
-      <div class="form-group form-full"><label>Employee</label><select id="no-emp">${_cache.rawEmployees?.map(e => `<option value="${e.employee_id}">${e.f_name} ${e.l_name}</option>`).join('')}</select></div>
+      <div class="form-group form-full"><label>Employee</label><select id="no-emp">${Object.entries(_cache.employees||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
       <div class="form-group form-full"><label>Due Date</label><input type="date" id="no-due"></div>
       <div class="form-group form-full"><label>Tasks (one per line)</label><textarea id="no-tasks" placeholder="Submit national ID&#10;Sign employment contract&#10;Setup email account&#10;Office tour&#10;Policy briefing"></textarea></div>
     </div>
@@ -1628,7 +1672,7 @@ async function loadAudit() {
     document.getElementById('au-count').textContent = `${res.meta.total} total events · page ${page}`;
     document.getElementById('au-prev').disabled = page <= 1;
     document.getElementById('au-next').disabled = res.data.length < 20;
-  } catch(e) { showToast('Failed to load audit logs: ' + e.message, 'error'); }
+  } catch(e) { showTableError('au-tbody', 6, e, 'audit'); }
 }
 
 function changeAuditPage(dir) {
@@ -1678,7 +1722,7 @@ async function renderRoles() {
           <td style="font-size:11px;color:var(--text3);">${u.last_login ? new Date(u.last_login).toLocaleDateString() : "Never"}</td>
         </tr>
       `).join("");
-  } catch(e) { showToast("Failed to load accounts: " + e.message, "error"); }
+  } catch(e) { showTableError("roles-tbody", 4, e, "roles"); }
 }
 
 async function assignRole() {
