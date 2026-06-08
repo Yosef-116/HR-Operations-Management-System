@@ -332,6 +332,69 @@ const leaveName  = id => (_cache.leaveTypes && _cache.leaveTypes[id]) || (id ? "
 const officeName = id => (_cache.offices  && _cache.offices[id])    || (id ? "Office #"+id  : "—");
 const empName    = id => (_cache.employees && _cache.employees[id]) || (id ? "Emp #"+id     : "—");
 
+const getDepartmentOptions = (selectedId = null, includePlaceholder = true) => {
+  const entries = Object.entries(_cache.depts || {});
+  if (!entries.length) return includePlaceholder ? '<option value="">No departments available</option>' : '';
+  return `${includePlaceholder ? '<option value="">Select a department</option>' : ''}${entries.map(([id,name]) => `<option value="${id}"${selectedId == id ? ' selected' : ''}>${name}</option>`).join('')}`;
+};
+
+const getJobOptions = (selectedId = null, includePlaceholder = true) => {
+  const entries = Object.entries(_cache.jobs || {});
+  if (!entries.length) return includePlaceholder ? '<option value="">No job titles available</option>' : '';
+  return `${includePlaceholder ? '<option value="">Select a job title</option>' : ''}${entries.map(([id,name]) => `<option value="${id}"${selectedId == id ? ' selected' : ''}>${name}</option>`).join('')}`;
+};
+
+async function showManageDepartments() {
+  const rows = (_cache.rawDepts || []).map(d => `
+      <tr>
+        <td>#${d.dept_id}</td>
+        <td>${d.dept_name}</td>
+        <td>${d.description || '—'}</td>
+      </tr>
+    `).join('');
+
+  showModal('Manage Departments', `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+      <div>
+        <div style="font-size:13px;color:var(--text3);margin-bottom:6px;">Create and assign departments directly from the HR frontend.</div>
+        <div style="font-size:12px;color:var(--text3);">Departments are used for hiring, employee records, and reporting.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="closeModal(); showAddDepartment();">New Department</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Description</th></tr></thead><tbody>
+      ${rows || '<tr><td colspan="3" style="text-align:center;padding:24px;color:var(--text3);">No departments have been created yet.</td></tr>'}
+    </tbody></table></div>
+  `, [
+    { label:'Close', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
+function showAddDepartment() {
+  showModal('Create Department', `
+    <div class="form-grid">
+      <div class="form-group"><label>Department Name *</label><input id="dept-name" placeholder="Human Resources"></div>
+      <div class="form-group form-full"><label>Description</label><input id="dept-desc" placeholder="Example: Employee relations, hiring, payroll support"></div>
+    </div>
+  `, [
+    { label:'Create Department', cls:'btn-primary', action: async () => {
+      const name = document.getElementById('dept-name').value.trim();
+      const desc = document.getElementById('dept-desc').value.trim();
+      if (!name) return showToast('Department name is required', 'error');
+      try {
+        await POST('/data/org/departments', { dept_name: name, description: desc || null });
+        showToast(`Department ${name} created`, 'success');
+        closeModal();
+        await loadLookups();
+        showManageDepartments();
+        if (currentPage === 'employees') renderEmployees();
+      } catch (err) {
+        showToast(err.message || 'Could not create department', 'error');
+      }
+    }},
+    { label:'Cancel', cls:'btn-secondary', action:closeModal }
+  ]);
+}
+
 // ===================== HTTP HELPER =====================
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
@@ -368,7 +431,7 @@ async function handleLogin() {
     authToken = data.data.token;
     sessionStorage.setItem('hr_token', authToken);
     currentUser = data.data.user;
-    enterApp();
+    await enterApp();
   } catch (e) {
     showAuthError(e.status === 401 ? 'Invalid email or password.' : (e.message || 'Could not reach server.'));
   } finally {
@@ -410,7 +473,7 @@ function showAuthError(msg) {
   setTimeout(() => el.style.display = 'none', 5000);
 }
 
-function enterApp() {
+async function enterApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   const username = currentUser.username || currentUser.email || 'User';
@@ -423,7 +486,7 @@ function enterApp() {
   const isAdmin = currentUser.roles?.some(r => ['Admin', 'HR_Manager'].includes(r));
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
   
-  loadLookups();
+  await loadLookups();
   navigate('dashboard');
   refreshLeaveBadge();
 }
@@ -627,6 +690,7 @@ async function renderEmployees() {
         <select id="emp-status" onchange="loadEmployees()" style="width:140px;">
           <option value="">All status</option><option>Active</option><option>Inactive</option><option>Resigned</option><option>Terminated</option>
         </select>
+        <button class="btn btn-secondary btn-sm" onclick="showManageDepartments()">Manage Departments</button>
       </div>
     </div>
     <div class="card">
@@ -734,6 +798,8 @@ function editEmployee(e) {
       <div class="form-group"><label>First Name</label><input id="ee-fn" value="${e.f_name||''}"></div>
       <div class="form-group"><label>Last Name</label><input id="ee-ln" value="${e.l_name||''}"></div>
       <div class="form-group form-full"><label>Email</label><input type="email" id="ee-em" value="${e.email||''}"></div>
+      <div class="form-group"><label>Department</label><select id="ee-dept">${getDepartmentOptions(e.dept_id)}</select></div>
+      <div class="form-group"><label>Job Title</label><select id="ee-job">${getJobOptions(e.job_id)}</select></div>
       <div class="form-group"><label>Phone</label><input id="ee-ph" value="${e.phone||''}"></div>
       <div class="form-group"><label>Status</label>
         <select id="ee-st">
@@ -748,6 +814,8 @@ function editEmployee(e) {
           f_name: document.getElementById('ee-fn').value,
           l_name: document.getElementById('ee-ln').value,
           email:  document.getElementById('ee-em').value,
+          dept_id: document.getElementById('ee-dept').value ? +document.getElementById('ee-dept').value : null,
+          job_id:  document.getElementById('ee-job').value  ? +document.getElementById('ee-job').value  : null,
           phone:  document.getElementById('ee-ph').value,
           employment_status: document.getElementById('ee-st').value
         });
@@ -766,6 +834,8 @@ function showAddEmployee() {
       <div class="form-group"><label>First Name *</label><input id="ne-fn" placeholder="Amara"></div>
       <div class="form-group"><label>Last Name *</label><input id="ne-ln" placeholder="Bekele"></div>
       <div class="form-group form-full"><label>Email *</label><input type="email" id="ne-em" placeholder="amara.bekele@company.com"></div>
+      <div class="form-group"><label>Department</label><select id="ne-dept">${getDepartmentOptions()}</select></div>
+      <div class="form-group"><label>Job Title</label><select id="ne-job">${getJobOptions()}</select></div>
       <div class="form-group"><label>Gender</label><select id="ne-gn"><option value="">—</option><option>Male</option><option>Female</option><option>Other</option></select></div>
       <div class="form-group"><label>Hire Date</label><input type="date" id="ne-hd"></div>
       <div class="form-group"><label>National ID</label><input id="ne-ni" placeholder="ETH/123456"></div>
@@ -780,6 +850,8 @@ function showAddEmployee() {
       try {
         await POST('/data/org/employee', {
           f_name: fn, l_name: ln, email: em,
+          dept_id: document.getElementById('ne-dept').value ? +document.getElementById('ne-dept').value : null,
+          job_id:  document.getElementById('ne-job').value  ? +document.getElementById('ne-job').value  : null,
           gender: document.getElementById('ne-gn').value || null,
           hire_date: document.getElementById('ne-hd').value || null,
           national_id: document.getElementById('ne-ni').value || null,
@@ -1173,8 +1245,8 @@ function showHireCandidate(candidateId, name) {
     </div>
     <div class="form-grid">
       <div class="form-group"><label>Hire Date</label><input type="date" id="h-date"></div>
-      <div class="form-group"><label>Department</label><select id="h-dept">${Object.entries(_cache.depts||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
-      <div class="form-group"><label>Job Title</label><select id="h-job">${Object.entries(_cache.jobs||{}).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select></div>
+      <div class="form-group"><label>Department</label><select id="h-dept">${getDepartmentOptions()}</select></div>
+      <div class="form-group"><label>Job Title</label><select id="h-job">${getJobOptions()}</select></div>
     </div>
   `, [
     { label:'Confirm Hire', cls:'btn-success', action: async () => {
