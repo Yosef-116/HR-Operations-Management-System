@@ -1471,14 +1471,23 @@ function showAssignAsset(assetId) {
 function showAddAsset() {
   showModal('Add New Asset', `
     <div class="form-grid">
+      <div class="form-group form-full"><label>Asset Name</label><input id="na-name" placeholder="Asset name"></div>
       <div class="form-group form-full"><label>Asset Type</label><select id="na-type"><option>Laptop</option><option>Monitor</option><option>Phone</option><option>Furniture</option><option>Vehicle</option><option>Other</option></select></div>
       <div class="form-group"><label>Serial Number</label><input id="na-sn" placeholder="Optional"></div>
       <div class="form-group"><label>Condition</label><select id="na-cond"><option>New</option><option>Excellent</option><option>Good</option><option>Fair</option></select></div>
     </div>
   `, [
     { label:'Add Asset', cls:'btn-primary', action: async () => {
+      const assetName = document.getElementById('na-name').value.trim();
+      if (!assetName) return showToast('Asset name is required', 'error');
       try {
-        await POST('/data/org/assets', { asset_type:document.getElementById('na-type').value, serial_number:document.getElementById('na-sn').value||null, condition:document.getElementById('na-cond').value, status:'Available' });
+        await POST('/data/org/assets', {
+          asset_name: assetName,
+          asset_type: document.getElementById('na-type').value,
+          serial_number: document.getElementById('na-sn').value || null,
+          condition: document.getElementById('na-cond').value,
+          status: 'Available'
+        });
         showToast('Asset added', 'success'); closeModal(); loadAssets();
       } catch(e) { showToast(e.message, 'error'); }
     }},

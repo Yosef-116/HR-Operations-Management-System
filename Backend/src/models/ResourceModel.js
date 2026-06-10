@@ -123,8 +123,19 @@ const create = async (resource, payload, client = null) => {
     throw new AppError('Audit logs are written by the audit service only', 403);
   }
 
-  const data = pickWritable(resource, payload, 'create');
+    const data = pickWritable(resource, payload, 'create');
   const fields = Object.keys(data);
+
+  const required = resource.columns
+    .filter((column) => !column.nullable && !column.hasDefault)
+    .filter((column) => !(resource.primaryKey.includes(column.name) && column.isSerial))
+    .map((column) => column.name);
+
+  const missingRequired = required.filter((name) => data[name] === undefined || data[name] === null || data[name] === '');
+  if (missingRequired.length) {
+    throw new AppError(`Missing required field(s) for ${resource.key}: ${missingRequired.join(', ')}`, 400);
+  }
+
   if (!fields.length) {
     throw new AppError(`No writable fields supplied for ${resource.key}`, 400);
   }

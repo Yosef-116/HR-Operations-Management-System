@@ -1,5 +1,4 @@
 -- HR and Operations Management System
--- Run this on an empty database. For local rebuilds, uncomment the DROP SCHEMA line below.
 -- DROP SCHEMA IF EXISTS shared, hr_auth, training, performance, people, payroll, recruitment, org CASCADE;
 
 CREATE SCHEMA IF NOT EXISTS org;
