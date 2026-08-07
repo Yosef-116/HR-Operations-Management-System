@@ -170,6 +170,16 @@ npm run dev
 
 Open `http://localhost:5173`. Vite proxies `/api` calls to the Express server on port 5000. The React migration currently includes authentication, dashboard, and employee management; remaining modules stay on the legacy dashboard until migrated and verified.
 
+### Render deployment
+
+The frontend must be built into `Backend/public`, the directory Express serves. The included [`render.yaml`](./render.yaml) uses this build command:
+
+```bash
+cd ../Frontend && npm ci --include=dev && npm run build && cd ../Backend && npm ci --omit=dev
+```
+
+For an existing Render service, set its **Root Directory** to `Backend` and copy that command into **Build Command**. Then redeploy the latest commit. The default `npm start` command starts Express, which will serve the generated React bundle.
+
 ---
 
 ## How It Works

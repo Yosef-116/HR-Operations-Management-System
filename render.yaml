@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: hr-operations-management-system
+    runtime: node
+    rootDir: Backend
+    buildCommand: cd ../Frontend && npm ci --include=dev && npm run build && cd ../Backend && npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
