@@ -3,7 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const env = require('../config/env');
 const workflowController = require('../controllers/workflowController');
-const { requireAnyPermission } = require('../middleware/auth');
+const { requireAnyPermission, requireSelfOrAnyPermission } = require('../middleware/auth');
 
 fs.mkdirSync(env.uploadDir, { recursive: true });
 
@@ -17,7 +17,7 @@ router.post('/payroll/runs/:runId/process', requireAnyPermission(['process_payro
 
 router.post('/leave-requests/:requestId/approve', requireAnyPermission(['approve_leave', 'manage_payroll']), workflowController.approveLeaveRequest);
 router.post('/leave-requests/:requestId/reject', requireAnyPermission(['approve_leave', 'manage_payroll']), workflowController.rejectLeaveRequest);
-router.get('/employees/:employeeId/leave-balance', requireAnyPermission(['view_payroll', 'approve_leave', 'manage_payroll', 'manage_org']), workflowController.getLeaveBalance);
+router.get('/employees/:employeeId/leave-balance', requireSelfOrAnyPermission(['view_payroll', 'approve_leave', 'manage_payroll', 'manage_org']), workflowController.getLeaveBalance);
 
 router.post('/expense-claims/:claimId/approve', requireAnyPermission(['approve_expense', 'manage_payroll']), workflowController.approveExpenseClaim);
 
@@ -41,6 +41,6 @@ router.post('/performance/plans/:planId/close', requireAnyPermission(['edit_perf
 
 router.post('/trainings/:trainingId/evaluate', requireAnyPermission(['manage_training']), workflowController.evaluateTraining);
 
-router.post('/documents/upload', requireAnyPermission(['manage_shared', 'view_shared']), upload.single('file'), workflowController.uploadDocument);
+router.post('/documents/upload', requireAnyPermission(['manage_shared']), upload.single('file'), workflowController.uploadDocument);
 
 module.exports = router;

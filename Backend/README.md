@@ -147,6 +147,7 @@ DB_SSL=true
 | `DB_SSL` | No | `false` | Set `true` for Supabase / cloud DBs |
 | `JWT_SECRET` | **Yes (prod)** | weak default | Min 32 random characters |
 | `JWT_EXPIRES_IN` | No | `8h` | e.g. `1d`, `8h`, `30m` |
+| `INITIAL_ADMIN_TOKEN` | **Yes (prod)** | — | One-time secret required to bootstrap the first Admin |
 | `BCRYPT_ROUNDS` | No | `10` | Cost factor for password hashing |
 | `GOOGLE_CLIENT_ID` | No | — | OAuth client ID for Google Sign-In |
 | `GOOGLE_AUTO_CREATE_ACCOUNTS` | No | `true` | Auto-create HR account on first Google login |
@@ -178,7 +179,7 @@ DB_SSL=true
 **Base URL:** `https://hr-operations-management-system.onrender.com/api/v1`  
 **Local URL:** `http://localhost:5000/api/v1`
 
-All endpoints (except `/auth/login`, `/auth/signup`, and `/health`) require a JWT:
+All endpoints except `/auth/bootstrap`, `/auth/login`, `/auth/signup`, `/auth/google`, and `/health` require a JWT:
 
 ```
 Authorization: Bearer <token>
@@ -190,13 +191,25 @@ Authorization: Bearer <token>
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
+| `POST` | `/auth/bootstrap` | Bootstrap token | Create the first administrator once |
 | `POST` | `/auth/signup` | No | Register using an employee email already in the DB |
-| `POST` | `/auth/register` | Optional (Admin) | Register with optional role assignment |
+| `POST` | `/auth/register` | Admin | Provision an employee account with role assignment |
 | `POST` | `/auth/login` | No | Login with email/username + password → JWT |
 | `POST` | `/auth/google` | No | Login / auto-register via Google ID token |
 | `GET` | `/auth/me` | Required | Return current user profile + roles + permissions |
 
 > **Rate limited:** `/auth/login` and `/auth/google` — 20 requests per IP per 15 minutes.
+
+**POST /auth/bootstrap**
+```json
+{
+  "email": "admin@company.com",
+  "password": "A-long-administrator-password",
+  "bootstrap_token": "the-value-of-INITIAL_ADMIN_TOKEN"
+}
+```
+
+This endpoint requires an active employee record, only works before any account exists, and creates an Admin account. Keep the bootstrap token in a secret store and rotate or remove it after setup.
 
 **POST /auth/signup**
 ```json
@@ -388,7 +401,7 @@ Tokens expire after `JWT_EXPIRES_IN` (default 8 hours). Refresh by calling `POST
 
 ### Roles and Permissions
 
-The first account created automatically gets the **Admin** role. All subsequent signups get **Employee** by default.
+The first administrator must be created through the bootstrap endpoint with `INITIAL_ADMIN_TOKEN`. Employee signups get the **Employee** role by default; only Admins can assign other built-in roles.
 
 Built-in roles: `Admin`, `HR Manager`, `Payroll Officer`, `Manager`, `Employee`
 
@@ -540,7 +553,7 @@ await fetch('/api/v1/workflows/documents/upload', {
 
 ### Common gotchas
 
-- **Soft deletes**: by default `DELETE` sets `is_deleted = true` and list endpoints hide deleted rows. Pass `?hard=true` to permanently delete. Pass `?includeDeleted=true` to list deleted rows.
+- **Soft deletes**: by default `DELETE` sets `is_deleted = true` and list endpoints hide deleted rows. Only Admins can pass `?hard=true` to permanently delete. Pass `?includeDeleted=true` to list deleted rows when authorized.
 - **Pagination**: always check `meta.total` for the real count. Page size defaults to 50, maximum 500.
 - **CORS**: in production set `CORS_ORIGIN` to your frontend domain on the server. The wildcard default is dev-only.
 - **Rate limiting**: if you get `429` on login, wait 15 minutes or reduce retry logic.

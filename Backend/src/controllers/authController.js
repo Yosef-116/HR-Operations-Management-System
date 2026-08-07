@@ -1,16 +1,12 @@
 const authService = require('../services/authService');
-const { hasAnyPermission } = require('../middleware/auth');
 const asyncHandler = require('../utils/asyncHandler');
 
 const register = asyncHandler(async (req, res) => {
-  const userCount = await authService.getUserCount();
-  const canAssignRoles = userCount === 0 || hasAnyPermission(req.user, ['manage_all']);
-
   const result = await authService.register({
     employee_id: req.body.employee_id,
     username: req.body.username,
     password: req.body.password,
-    role_names: canAssignRoles ? (req.body.role_names || []) : []
+    role_names: req.body.role_names || []
   });
 
   res.status(201).json({
@@ -20,19 +16,25 @@ const register = asyncHandler(async (req, res) => {
 });
 
 const signup = asyncHandler(async (req, res) => {
-  const userCount = await authService.getUserCount();
-  const canAssignRoles = userCount === 0 || hasAnyPermission(req.user, ['manage_all']);
-
   const result = await authService.signupWithEmployeeEmail({
     email: req.body.email,
     password: req.body.password,
-    role_names: canAssignRoles ? (req.body.role_names || []) : []
+    role_names: []
   });
 
   res.status(201).json({
     success: true,
     data: result
   });
+});
+
+const bootstrap = asyncHandler(async (req, res) => {
+  const result = await authService.bootstrapAdmin({
+    email: req.body.email,
+    password: req.body.password,
+    bootstrapToken: req.body.bootstrap_token
+  });
+  res.status(201).json({ success: true, data: result });
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -65,6 +67,7 @@ const me = asyncHandler(async (req, res) => {
 module.exports = {
   register,
   signup,
+  bootstrap,
   login,
   google,
   me

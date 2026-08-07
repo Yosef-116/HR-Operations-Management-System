@@ -54,8 +54,22 @@ const requireAnyPermission = (permissionSelector) => (req, res, next) => {
   return next(new AppError(`Missing permission: ${required.join(' or ')}`, 403));
 };
 
+const requireSelfOrAnyPermission = (permissionSelector, employeeParam = 'employeeId') => (req, res, next) => {
+  const requestedEmployeeId = req.params[employeeParam];
+  if (req.user && req.user.employee_id !== null && req.user.employee_id !== undefined
+    && String(req.user.employee_id) === String(requestedEmployeeId)) {
+    return next();
+  }
+
+  const permissions = typeof permissionSelector === 'function' ? permissionSelector(req) : permissionSelector;
+  const required = Array.isArray(permissions) ? permissions : [permissions];
+  if (hasAnyPermission(req.user, required)) return next();
+  return next(new AppError(`Missing permission: ${required.join(' or ')}`, 403));
+};
+
 module.exports = {
   authenticate,
   requireAnyPermission,
+  requireSelfOrAnyPermission,
   hasAnyPermission
 };

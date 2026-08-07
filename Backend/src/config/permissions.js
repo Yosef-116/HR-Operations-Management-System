@@ -25,9 +25,7 @@ const CORE_ROLES = [
   },
   { roleName: 'Employee', permissions: [
     'view_self', 'request_leave', 'submit_expense', 'view_shared',
-    'view_org',          
-    'create_payroll',    
-    ]
+  ]
   }
 ];
 

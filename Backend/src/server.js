@@ -1,6 +1,7 @@
 const app = require('./app');
 const env = require('./config/env');
 const { pool, testConnection, getSafeConnectionInfo } = require('./config/db');
+const { seedCoreRoles } = require('./services/authService');
 
 const startServer = async () => {
   try {
@@ -9,6 +10,19 @@ const startServer = async () => {
 
     const connection = await testConnection();
     console.log(`Database connected: ${connection.database} as ${connection.user_name}`);
+    await pool.connect().then(async (client) => {
+      try {
+        await client.query('BEGIN');
+        await seedCoreRoles(client);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    });
+    console.log('Core roles and permissions synchronised');
 
     const server = app.listen(env.port, () => {
       console.log(`HR Operations Management API listening on port ${env.port}`);

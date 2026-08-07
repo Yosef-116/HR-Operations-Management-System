@@ -15,12 +15,27 @@ const authorizeResource = (action) => (req, res, next) => {
 
   req.resource = resource;
   const required = permissionsFor(action, resource);
+  const employeeId = req.user && req.user.employee_id;
 
-  // Allow employees to read org data (their own record) and create payroll entries
-  if (action === 'view' && resource.schema === 'org') required.push('view_self');
-  if (action === 'create' && resource.schema === 'payroll') required.push('submit_expense', 'request_leave');
-
+  // A resource-level permission is broader than self-service access and must
+  // win here; otherwise admins and HR staff would accidentally be restricted
+  // to their own records.
   if (hasAnyPermission(req.user, required)) return next();
+
+  // Self-service access must be constrained in the data query, not merely by a
+  // permission name.  The generic endpoint otherwise exposes every employee's
+  // records to a user who is allowed to see only their own.
+  const selfServiceRules = {
+    'org.employee': { view: 'view_self' },
+    'payroll.leave_requests': { view: 'request_leave', create: 'request_leave' },
+    'payroll.expense_claims': { view: 'submit_expense', create: 'submit_expense' }
+  };
+  const selfPermission = selfServiceRules[resource.key] && selfServiceRules[resource.key][action];
+  if (selfPermission && employeeId && hasAnyPermission(req.user, [selfPermission])) {
+    req.resourceScope = { employee_id: employeeId };
+    return next();
+  }
+
   return next(new AppError(`Missing permission for ${action} on ${resource.key}`, 403));
 };
 

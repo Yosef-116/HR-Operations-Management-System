@@ -35,7 +35,7 @@ A full-stack HR management platform built with **Node.js**, **Express**, and **P
 | Database | PostgreSQL 15 (hosted on Supabase) |
 | Authentication | JSON Web Tokens (jsonwebtoken) |
 | Password hashing | bcryptjs |
-| Frontend | Vanilla HTML / CSS / JavaScript (single file) |
+| Frontend | React + TypeScript + Vite (incremental migration) |
 | File uploads | Multer |
 | Security | Helmet, express-rate-limit, CORS |
 | Deployment | Render |
@@ -50,7 +50,7 @@ HR-Operations-Management-System/
 │   ├── Mysql/
 │   │   └── hr_postgresql_schema.sql   # Master schema — all 52 tables across 8 schemas
 │   ├── public/
-│   │   └── index.html                 # Frontend dashboard (served by Express)
+│   │   └── index.html                 # Legacy dashboard (retained during migration)
 │   ├── scripts/
 │   │   ├── migrate.js                 # Run schema SQL against the database
 │   │   ├── db-check.js                # Verify DB connection and list schemas
@@ -91,7 +91,9 @@ HR-Operations-Management-System/
 │   ├── Dockerfile
 │   └── README.md                      # Full backend and API reference
 └── Frontend/
-    └── index_connected.html           # Backup copy of the frontend
+    ├── src/                           # React application source
+    ├── package.json                   # React/Vite scripts and dependencies
+    └── index_connected.html           # Legacy frontend backup
 ```
 
 ---
@@ -156,11 +158,23 @@ The system uses 8 PostgreSQL schemas covering 52 tables:
 
 6. Open your browser and navigate to `http://localhost:5000`
 
+### React frontend (development)
+
+In a second terminal:
+
+```bash
+cd Frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` calls to the Express server on port 5000. The React migration currently includes authentication, dashboard, and employee management; remaining modules stay on the legacy dashboard until migrated and verified.
+
 ---
 
 ## How It Works
 
-1. The user logs in at the root URL. The frontend authenticates against `POST /api/v1/auth/login` and receives a JWT.
+1. The user logs in through the React frontend. It authenticates against `POST /api/v1/auth/login` and receives a JWT.
 2. The JWT is stored in `sessionStorage` and attached to every subsequent request as a `Bearer` token.
 3. The token payload contains the user's roles and permissions. The frontend uses these to show or hide UI elements.
 4. Data is fetched through the generic CRUD API (`/api/v1/data/:schema/:table`) with support for pagination, search, sort, and column filters.
@@ -176,6 +190,7 @@ The system uses 8 PostgreSQL schemas covering 52 tables:
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/auth/signup` | Register using an employee email already in the system |
+| `POST` | `/auth/bootstrap` | Bootstrap the first administrator with `INITIAL_ADMIN_TOKEN` |
 | `POST` | `/auth/login` | Login and receive a JWT |
 | `GET` | `/auth/me` | Get current user profile and permissions |
 | `GET` | `/resources` | List all 52 available tables |

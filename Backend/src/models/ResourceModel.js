@@ -23,6 +23,14 @@ const buildWhere = (resource, query = {}, options = {}) => {
     clauses.push(`${quoteIdent('is_deleted')} = false`);
   }
 
+  for (const [key, value] of Object.entries(options.scope || {})) {
+    if (!columns.has(key)) {
+      throw new AppError(`Invalid scope column for ${resource.key}: ${key}`, 500);
+    }
+    values.push(value);
+    clauses.push(`${quoteIdent(key)} = $${values.length}`);
+  }
+
   for (const [key, value] of Object.entries(query)) {
     if (reserved.has(key) || !columns.has(key) || value === undefined || value === '') continue;
     values.push(value);
@@ -67,9 +75,9 @@ const buildPkWhere = (resource, pkValues, values = []) => {
 // separate queries. The old approach ran COUNT first, then fetched rows — any
 // INSERT or DELETE between those two queries made meta.total inconsistent with
 // the rows actually returned. A window function computes both in one atomic pass.
-const findAll = async (resource, query = {}, client = null) => {
+const findAll = async (resource, query = {}, client = null, options = {}) => {
   const { limit, offset, page } = getLimitOffset(query);
-  const { values, whereClause } = buildWhere(resource, query);
+  const { values, whereClause } = buildWhere(resource, query, options);
   const columns = columnNames(resource);
   const sortColumn = columns.has(query.sort) ? query.sort : (resource.primaryKey[0] || resource.columns[0].name);
   const order = String(query.order || 'asc').toLowerCase() === 'desc' ? 'DESC' : 'ASC';
@@ -108,6 +116,14 @@ const findByPk = async (resource, pkValues, client = null, options = {}) => {
 
   if (resource.softDelete && !options.includeDeleted) {
     clauses.push(`${quoteIdent('is_deleted')} = false`);
+  }
+
+  for (const [key, value] of Object.entries(options.scope || {})) {
+    if (!columnNames(resource).has(key)) {
+      throw new AppError(`Invalid scope column for ${resource.key}: ${key}`, 500);
+    }
+    values.push(value);
+    clauses.push(`${quoteIdent(key)} = $${values.length}`);
   }
 
   const result = await runner(client).query(
@@ -170,8 +186,9 @@ const updateByPk = async (resource, pkValues, payload, client = null) => {
 
   const pkWhere = buildPkWhere(resource, pkValues, values);
 
+  const activeClause = resource.softDelete ? ` AND ${quoteIdent('is_deleted')} = false` : '';
   const result = await runner(client).query(
-    `UPDATE ${qualifiedName(resource)} SET ${assignments.join(', ')} WHERE ${pkWhere.whereClause} RETURNING ${selectList(resource)}`,
+    `UPDATE ${qualifiedName(resource)} SET ${assignments.join(', ')} WHERE ${pkWhere.whereClause}${activeClause} RETURNING ${selectList(resource)}`,
     pkWhere.values
   );
 
@@ -192,6 +209,10 @@ const deleteByPk = async (resource, pkValues, client = null, options = {}) => {
       pkWhere.values
     );
     return result.rows[0] || null;
+  }
+
+  if (resource.softDelete && options.hard && !options.allowHardDelete) {
+    throw new AppError('Hard deletion is not allowed for this resource', 403);
   }
 
   const result = await runner(client).query(

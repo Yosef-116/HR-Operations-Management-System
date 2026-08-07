@@ -18,9 +18,19 @@ const selectList = (resource) => resource.columns.map((column) => quoteIdent(col
 const isTruthy = (value) => ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
 
 const getLimitOffset = (query) => {
-  const limit = Math.min(Math.max(Number(query.limit || 50), 1), 500);
-  const page = Math.max(Number(query.page || 1), 1);
-  const offset = query.offset !== undefined ? Math.max(Number(query.offset), 0) : (page - 1) * limit;
+  const parsePositiveInteger = (value, fallback, min = 1) => {
+    if (value === undefined || value === '') return fallback;
+    const parsed = Number(value);
+    if (!Number.isInteger(parsed) || parsed < min) {
+      throw new AppError('Pagination values must be positive integers', 400);
+    }
+    return parsed;
+  };
+  const limit = Math.min(parsePositiveInteger(query.limit, 50), 500);
+  const page = parsePositiveInteger(query.page, 1);
+  const offset = query.offset !== undefined
+    ? parsePositiveInteger(query.offset, 0, 0)
+    : (page - 1) * limit;
   return { limit, offset, page };
 };
 

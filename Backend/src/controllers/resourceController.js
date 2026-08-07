@@ -37,7 +37,7 @@ const listResources = asyncHandler(async (req, res) => {
 });
 
 const list = asyncHandler(async (req, res) => {
-  const result = await ResourceModel.findAll(req.resource, req.query);
+  const result = await ResourceModel.findAll(req.resource, req.query, null, { scope: req.resourceScope });
   res.json({
     success: true,
     data: result.rows,
@@ -46,7 +46,7 @@ const list = asyncHandler(async (req, res) => {
 });
 
 const getOne = asyncHandler(async (req, res) => {
-  const row = await ResourceModel.findByPk(req.resource, pkValuesFromRequest(req, req.resource));
+  const row = await ResourceModel.findByPk(req.resource, pkValuesFromRequest(req, req.resource), null, { scope: req.resourceScope });
   if (!row) throw new AppError(`${req.resource.key} record not found`, 404);
 
   res.json({
@@ -59,7 +59,8 @@ const create = asyncHandler(async (req, res) => {
   const resource = req.resource;
 
   const created = await db.withTransaction(async (client) => {
-    const row = await ResourceModel.create(resource, req.body, client);
+    const payload = req.resourceScope ? { ...req.body, ...req.resourceScope } : req.body;
+    const row = await ResourceModel.create(resource, payload, client);
     await auditService.writeAuditLog({
       client,
       userId: req.user && req.user.user_id,
@@ -115,7 +116,8 @@ const remove = asyncHandler(async (req, res) => {
     const oldRow = await ResourceModel.findByPk(resource, pkValues, client, { includeDeleted: true });
     if (!oldRow) throw new AppError(`${resource.key} record not found`, 404);
 
-    const row = await ResourceModel.deleteByPk(resource, pkValues, client, { hard });
+    const canHardDelete = req.user && (req.user.roles || []).includes('Admin');
+    const row = await ResourceModel.deleteByPk(resource, pkValues, client, { hard, allowHardDelete: canHardDelete });
     await auditService.writeAuditLog({
       client,
       userId: req.user && req.user.user_id,

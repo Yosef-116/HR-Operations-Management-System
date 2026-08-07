@@ -33,6 +33,7 @@ const config = {
   dbSsl: bool(process.env.DB_SSL) ? { rejectUnauthorized: false } : false,
   jwtSecret: process.env.JWT_SECRET || 'development-only-secret-change-me',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',
+  initialAdminToken: process.env.INITIAL_ADMIN_TOKEN || '',
   bcryptRounds: number(process.env.BCRYPT_ROUNDS, 10),
   googleClientIds: csvList(process.env.GOOGLE_CLIENT_IDS || process.env.GOOGLE_CLIENT_ID || ''),
   googleAutoCreateAccounts: process.env.GOOGLE_AUTO_CREATE_ACCOUNTS === undefined ? true : bool(process.env.GOOGLE_AUTO_CREATE_ACCOUNTS, true),
@@ -48,6 +49,10 @@ if (config.nodeEnv === 'production') {
 
   if (!config.authRequired) {
     throw new Error('AUTH_REQUIRED must not be false in production.');
+  }
+
+  if (!config.initialAdminToken) {
+    throw new Error('INITIAL_ADMIN_TOKEN must be set in production to bootstrap the first administrator.');
   }
 }
 
