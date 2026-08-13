@@ -20,7 +20,7 @@ export function LoginPage({ loading }: { loading: boolean }) {
     <div className="brand"><span className="brand-mark">W</span><span><strong>WorkForce</strong><small>HR Operations</small></span></div>
     <h1>Welcome back</h1><p>Sign in to your HR portal to continue.</p>
     {error && <p className="form-error" role="alert">{error}</p>}
-    <label>Email address<input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+    <label>Email or Username<input type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
     <label>Password<input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
     <button className="button primary" disabled={submitting || loading}>{submitting ? 'Signing in…' : 'Sign in'}</button>
   </form></main>;
