@@ -43,4 +43,8 @@ router.post('/trainings/:trainingId/evaluate', requireAnyPermission(['manage_tra
 
 router.post('/documents/upload', requireAnyPermission(['manage_shared']), upload.single('file'), workflowController.uploadDocument);
 
+router.post('/attendance/clock-in', requireAnyPermission(['view_self', 'manage_org']), workflowController.clockIn);
+router.post('/attendance/clock-out', requireAnyPermission(['view_self', 'manage_org']), workflowController.clockOut);
+router.post('/attendance/overtime/:overtimeId/approve', requireAnyPermission(['manage_payroll', 'manage_org']), workflowController.approveOvertime);
+
 module.exports = router;

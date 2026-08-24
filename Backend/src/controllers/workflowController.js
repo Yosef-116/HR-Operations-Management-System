@@ -124,5 +124,21 @@ module.exports = {
     res,
     await workflowService.recordDocument(req.file, req.body, reqMeta(req)),
     201
+  )),
+
+  clockIn: asyncHandler(async (req, res) => ok(
+    res,
+    await workflowService.clockIn(req.body, reqMeta(req)),
+    201
+  )),
+
+  clockOut: asyncHandler(async (req, res) => ok(
+    res,
+    await workflowService.clockOut(req.body, reqMeta(req))
+  )),
+
+  approveOvertime: asyncHandler(async (req, res) => ok(
+    res,
+    await workflowService.approveOvertime(req.params.overtimeId, req.body, reqMeta(req))
   ))
 };

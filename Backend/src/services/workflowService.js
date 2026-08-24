@@ -758,6 +758,83 @@ const recordDocument = async (file, payload, reqMeta) => db.withTransaction(asyn
   return document.rows[0];
 });
 
+const clockIn = async (payload, reqMeta) => db.withTransaction(async (client) => {
+  if (!reqMeta.employeeId) {
+    throw new AppError('Your account is not linked to an employee record', 403);
+  }
+
+  const existing = await client.query(
+    `SELECT * FROM org.attendance
+     WHERE employee_id = $1 AND date = $2 AND check_out IS NULL`,
+    [reqMeta.employeeId, payload.date || today()]
+  );
+
+  if (existing.rows.length > 0) {
+    throw new AppError('You are already clocked in', 409);
+  }
+
+  const attendance = await client.query(
+    `INSERT INTO org.attendance (employee_id, date, status, check_in, location_type)
+     VALUES ($1, $2, 'Present', CURRENT_TIME, $3)
+     RETURNING *`,
+    [reqMeta.employeeId, payload.date || today(), payload.location_type || 'Office']
+  );
+
+  await audit(client, reqMeta, 'INSERT', 'org.attendance', attendance.rows[0].attendance_id, null, attendance.rows[0]);
+  return attendance.rows[0];
+});
+
+const clockOut = async (payload, reqMeta) => db.withTransaction(async (client) => {
+  if (!reqMeta.employeeId) {
+    throw new AppError('Your account is not linked to an employee record', 403);
+  }
+
+  const existing = await client.query(
+    `SELECT * FROM org.attendance
+     WHERE employee_id = $1 AND date = $2 AND check_out IS NULL`,
+    [reqMeta.employeeId, payload.date || today()]
+  );
+
+  if (existing.rows.length === 0) {
+    throw new AppError('No open attendance record found for today', 404);
+  }
+
+  const oldAttendance = existing.rows[0];
+
+  const result = await client.query(
+    `UPDATE org.attendance
+     SET check_out = CURRENT_TIME,
+         total_hours = EXTRACT(EPOCH FROM (CURRENT_TIME - check_in))/3600,
+         updated_at = now()
+     WHERE attendance_id = $1
+     RETURNING *`,
+    [oldAttendance.attendance_id]
+  );
+
+  await audit(client, reqMeta, 'UPDATE', 'org.attendance', oldAttendance.attendance_id, oldAttendance, result.rows[0]);
+  return result.rows[0];
+});
+
+const approveOvertime = async (overtimeId, payload, reqMeta) => db.withTransaction(async (client) => {
+  const oldOvertime = await fetchOne(client, 'SELECT * FROM org.overtime_records WHERE overtime_id = $1', [overtimeId], 'Overtime record not found');
+  
+  const status = payload.payment_status || 'Approved';
+  if (!['Pending', 'Approved', 'Paid', 'Rejected'].includes(status)) {
+    throw new AppError('Overtime payment_status must be Pending, Approved, Paid, or Rejected', 400);
+  }
+
+  const result = await client.query(
+    `UPDATE org.overtime_records
+     SET payment_status = $1, approved_by = $2, updated_at = now()
+     WHERE overtime_id = $3
+     RETURNING *`,
+    [status, payload.approved_by || reqMeta.employeeId || null, overtimeId]
+  );
+
+  await audit(client, reqMeta, 'UPDATE', 'org.overtime_records', overtimeId, oldOvertime, result.rows[0]);
+  return result.rows[0];
+});
+
 module.exports = {
   calculatePayroll,
   generatePayslips,
@@ -778,5 +855,8 @@ module.exports = {
   evaluateGoal,
   closePerformancePlan,
   evaluateTraining,
-  recordDocument
+  recordDocument,
+  clockIn,
+  clockOut,
+  approveOvertime
 };

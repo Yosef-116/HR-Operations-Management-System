@@ -60,6 +60,8 @@ skills-lock.json
 .agents/
 .agents.md
 AGENTS.md
+.codex
+.impeccable
 
 # Optional: Backend specific if still needed
 Backend/node_modules/
@@ -67,3 +69,24 @@ Backend/.env
 Backend/uploads/*
 !Backend/uploads/.gitkeep
 Backend/DEPLOYMENT.md
+
+# Temporary and cache files
+tmp/
+.tmp/
+temp/
+.eslintcache
+*.tmp
+*.bak
+*~
+
+# Secrets and certificates
+*.pem
+*.key
+*.cert
+*.crt
+
+# Temporary testing scripts
+test*.js
+test*.ps1
+test*.ts
+scratch/
