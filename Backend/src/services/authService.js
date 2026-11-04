@@ -273,12 +273,26 @@ const register = async ({ employee_id, username, password, role_names = [] }) =>
   });
 };
 
+const findEmployeeByEmailOrUsername = async (identifier, client = null) => {
+  const executor = client || db;
+  const normalized = String(identifier || '').trim().toLowerCase();
+  const result = await executor.query(
+    `SELECT employee_id, f_name, l_name, email, employment_status, is_deleted
+     FROM org.employee
+     WHERE (lower(email) = $1 OR lower(f_name) = $1)
+       AND COALESCE(is_deleted, false) = false
+     LIMIT 1`,
+    [normalized]
+  );
+  return result.rows[0] || null;
+};
+
 const bootstrapAdmin = async ({ email, password, bootstrapToken }) => {
   if (!tokensMatch(bootstrapToken, env.initialAdminToken)) {
     throw new AppError('Invalid bootstrap token', 403);
   }
   if (!email || !password) {
-    throw new AppError('email and password are required', 400);
+    throw new AppError('email/username and password are required', 400);
   }
   if (String(password).length < 12) {
     throw new AppError('Administrator password must be at least 12 characters long', 400);
@@ -291,7 +305,8 @@ const bootstrapAdmin = async ({ email, password, bootstrapToken }) => {
       throw new AppError('An administrator has already been bootstrapped', 409);
     }
 
-    const employee = await findEmployeeByEmail(email, client);
+    // Accept either a proper email or a plain username/identifier
+    const employee = await findEmployeeByEmailOrUsername(email, client);
     ensureEmployeeCanUseAuth(employee);
     const profile = await createAccountForEmployee({ employee, password, roleNames: ['Admin'] }, client);
     return { user: profile, token: signToken(profile) };

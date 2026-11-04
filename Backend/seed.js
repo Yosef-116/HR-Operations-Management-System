@@ -5,7 +5,7 @@ async function seed() {
   await client.connect(); 
   
   // Create Employee
-  const res = await client.query('INSERT INTO org.employee (f_name, l_name, email, employment_status, hire_date) VALUES ($1, $2, $3, $4, CURRENT_DATE) ON CONFLICT (email) DO UPDATE SET f_name=EXCLUDED.f_name RETURNING employee_id', ['Admin', 'User', 'admin@example.com', 'Active']); 
+  const res = await client.query('INSERT INTO org.employee (f_name, l_name, email, employment_status, hire_date) VALUES ($1, $2, $3, $4, CURRENT_DATE) ON CONFLICT (email) DO UPDATE SET f_name=EXCLUDED.f_name RETURNING employee_id', ['Admin', 'User', 'admin', 'Active']); 
   console.log('Employee seeded:', res.rows); 
   
   // Create User Account
