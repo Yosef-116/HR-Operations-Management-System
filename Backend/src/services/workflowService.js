@@ -209,36 +209,115 @@ const approveLeaveRequest = async (requestId, payload, reqMeta) => db.withTransa
 const getLeaveBalance = async (employeeId, typeId, yearValue) => db.withTransaction(async (client) => {
   const year = Number(yearValue || new Date().getFullYear());
   const employee = await fetchOne(client, 'SELECT employee_id, job_id FROM org.employee WHERE employee_id = $1', [employeeId], 'Employee not found');
-  if (!employee.job_id) throw new AppError('Employee has no job title assigned', 409);
 
-  const entitlement = await fetchOne(
-    client,
-    `SELECT *
-     FROM payroll.leave_entitlements
-     WHERE type_id = $1 AND job_id = $2`,
-    [typeId, employee.job_id],
-    'Leave entitlement not found for employee job'
+  // Ensure default leave types exist if table is empty
+  const typeCountRes = await client.query('SELECT COUNT(*)::int as count FROM payroll.leave_types');
+  if (typeCountRes.rows[0].count === 0) {
+    await client.query(`
+      INSERT INTO payroll.leave_types (name, is_paid) VALUES
+        ('Annual Leave', true),
+        ('Sick Leave', true),
+        ('Maternity Leave', true),
+        ('Paternity Leave', true),
+        ('Compassionate Leave', true),
+        ('Unpaid Leave', false)
+    `);
+  }
+
+  if (typeId) {
+    const entitlementRes = await client.query(
+      `SELECT e.*, lt.name as type_name, lt.is_paid
+       FROM payroll.leave_entitlements e
+       JOIN payroll.leave_types lt ON lt.type_id = e.type_id
+       WHERE e.type_id = $1 AND e.job_id = $2`,
+      [typeId, employee.job_id || -1]
+    );
+
+    let daysPerYear = 20;
+    let typeName = 'Leave';
+    let isPaid = true;
+    let canCarryOver = true;
+
+    if (entitlementRes.rowCount > 0) {
+      daysPerYear = Number(entitlementRes.rows[0].days_per_year);
+      typeName = entitlementRes.rows[0].type_name;
+      isPaid = entitlementRes.rows[0].is_paid;
+      canCarryOver = entitlementRes.rows[0].can_carry_over;
+    } else {
+      const lt = await client.query('SELECT * FROM payroll.leave_types WHERE type_id = $1', [typeId]);
+      if (lt.rowCount > 0) {
+        typeName = lt.rows[0].name;
+        isPaid = lt.rows[0].is_paid;
+        daysPerYear = typeName.toLowerCase().includes('sick') ? 14 : (typeName.toLowerCase().includes('annual') ? 20 : 10);
+      }
+    }
+
+    const used = await client.query(
+      `SELECT COALESCE(SUM((end_date - start_date) + 1), 0)::int AS used_days
+       FROM payroll.leave_requests
+       WHERE employee_id = $1
+         AND type_id = $2
+         AND status = 'Approved'
+         AND start_date >= make_date($3, 1, 1)
+         AND start_date < make_date($3 + 1, 1, 1)`,
+      [employeeId, typeId, year]
+    );
+
+    const usedDays = Number(used.rows[0].used_days || 0);
+
+    return {
+      employee_id: Number(employeeId),
+      type_id: Number(typeId),
+      type_name: typeName,
+      is_paid: isPaid,
+      year,
+      days_per_year: daysPerYear,
+      used_days: usedDays,
+      remaining_days: Math.max(0, daysPerYear - usedDays),
+      can_carry_over: canCarryOver
+    };
+  }
+
+  // When no typeId is specified, return all types with computed balance
+  const typesRes = await client.query('SELECT * FROM payroll.leave_types ORDER BY type_id ASC');
+  const entitlementsRes = await client.query(
+    'SELECT * FROM payroll.leave_entitlements WHERE job_id = $1',
+    [employee.job_id || -1]
   );
+  const entMap = new Map(entitlementsRes.rows.map(e => [e.type_id, e]));
 
-  const used = await client.query(
-    `SELECT COALESCE(SUM((end_date - start_date) + 1), 0)::int AS used_days
+  const usedResult = await client.query(
+    `SELECT type_id, COALESCE(SUM((end_date - start_date) + 1), 0)::int AS used_days
      FROM payroll.leave_requests
      WHERE employee_id = $1
-       AND type_id = $2
        AND status = 'Approved'
-       AND start_date >= make_date($3, 1, 1)
-       AND start_date < make_date($3 + 1, 1, 1)`,
-    [employeeId, typeId, year]
+       AND start_date >= make_date($2, 1, 1)
+       AND start_date < make_date($2 + 1, 1, 1)
+     GROUP BY type_id`,
+    [employeeId, year]
   );
+  const usedMap = new Map(usedResult.rows.map(r => [r.type_id, Number(r.used_days)]));
+
+  const balances = typesRes.rows.map(t => {
+    const ent = entMap.get(t.type_id);
+    const defaultDays = t.name.toLowerCase().includes('sick') ? 14 : (t.name.toLowerCase().includes('annual') ? 20 : 10);
+    const daysPerYear = ent ? Number(ent.days_per_year) : defaultDays;
+    const usedDays = usedMap.get(t.type_id) || 0;
+    return {
+      type_id: t.type_id,
+      type_name: t.name,
+      is_paid: t.is_paid,
+      days_per_year: daysPerYear,
+      used_days: usedDays,
+      remaining_days: Math.max(0, daysPerYear - usedDays),
+      can_carry_over: ent ? ent.can_carry_over : true
+    };
+  });
 
   return {
     employee_id: Number(employeeId),
-    type_id: Number(typeId),
     year,
-    days_per_year: entitlement.days_per_year,
-    used_days: used.rows[0].used_days,
-    remaining_days: Number(entitlement.days_per_year) - Number(used.rows[0].used_days),
-    can_carry_over: entitlement.can_carry_over
+    balances
   };
 });
 

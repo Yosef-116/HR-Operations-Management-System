@@ -38,6 +38,40 @@ async function seed() {
     console.log('Admin role assigned.');
   }
 
+  // Seed Leave Types
+  const defaultLeaveTypes = [
+    { name: 'Annual Leave', is_paid: true },
+    { name: 'Sick Leave', is_paid: true },
+    { name: 'Maternity Leave', is_paid: true },
+    { name: 'Paternity Leave', is_paid: true },
+    { name: 'Compassionate Leave', is_paid: true },
+    { name: 'Unpaid Leave', is_paid: false }
+  ];
+
+  for (const lt of defaultLeaveTypes) {
+    await client.query(
+      'INSERT INTO payroll.leave_types (name, is_paid) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM payroll.leave_types WHERE lower(name) = lower($1))',
+      [lt.name, lt.is_paid]
+    );
+  }
+  console.log('Default leave types verified/seeded.');
+
+  // Seed default entitlements for existing job titles
+  const jobs = await client.query('SELECT job_id FROM recruitment.job_titles');
+  const types = await client.query('SELECT type_id, name FROM payroll.leave_types');
+  for (const job of jobs.rows) {
+    for (const type of types.rows) {
+      const defaultDays = type.name.toLowerCase().includes('sick') ? 14 : (type.name.toLowerCase().includes('annual') ? 20 : 10);
+      await client.query(
+        `INSERT INTO payroll.leave_entitlements (type_id, job_id, days_per_year, accrual_rate_monthly, can_carry_over)
+         VALUES ($1, $2, $3, 1.5, true)
+         ON CONFLICT (type_id, job_id) DO NOTHING`,
+        [type.type_id, job.job_id, defaultDays]
+      );
+    }
+  }
+  console.log('Leave entitlements verified/seeded.');
+
   await client.end();
 }
 seed().catch(console.error);

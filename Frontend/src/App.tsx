@@ -4,6 +4,7 @@ import { AppLayout } from './components/AppLayout';
 import { LoginPage } from './features/auth/LoginPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { EmployeesPage } from './features/employees/EmployeesPage';
+import { LeavePage } from './features/leave/LeavePage';
 import { PlaceholderPage } from './components/PlaceholderPage';
 
 function ProtectedApp() {
@@ -15,6 +16,7 @@ function ProtectedApp() {
     <Routes>
       <Route index element={<DashboardPage />} />
       <Route path="employees" element={<EmployeesPage />} />
+      <Route path="leave" element={<LeavePage />} />
       <Route path=":module" element={<PlaceholderPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

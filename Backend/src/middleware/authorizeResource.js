@@ -22,6 +22,17 @@ const authorizeResource = (action) => (req, res, next) => {
   // to their own records.
   if (hasAnyPermission(req.user, required)) return next();
 
+  // Reference/lookup tables required for self-service dropdowns and directory views
+  const referenceViewTables = new Set([
+    'payroll.leave_types',
+    'org.departments',
+    'recruitment.job_titles',
+    'org.offices'
+  ]);
+  if (action === 'view' && referenceViewTables.has(resource.key)) {
+    return next();
+  }
+
   // Self-service access must be constrained in the data query, not merely by a
   // permission name.  The generic endpoint otherwise exposes every employee's
   // records to a user who is allowed to see only their own.

@@ -12,6 +12,23 @@ label { display: grid; gap: .4rem; color: #c8c8d0; font-size: .85rem; } input, s
 /* Hamburger button — hidden on desktop, shown on mobile */
 .hamburger { display: none; border: 0; background: transparent; color: #f0f0f2; font-size: 1.4rem; padding: .25rem .4rem; border-radius: .4rem; line-height: 1; }.hamburger:hover { background: rgba(124,106,240,.14); }
 
+/* Tabs & filter controls */
+.tab-group { display: inline-flex; gap: .25rem; background: #202025; padding: .25rem; border-radius: .55rem; border: 1px solid #303038; margin-top: .35rem; }
+.tab-btn { background: transparent; border: 0; color: #9898a8; padding: .35rem .75rem; font-size: .8rem; font-weight: 500; border-radius: .4rem; transition: background .15s, color .15s; }
+.tab-btn:hover { color: #f0f0f2; }
+.tab-btn.active { background: #2c2c35; color: #ffffff; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
+
+/* Status colors */
+.status-approved, .status.approved { color: #8fe3b6; background: rgba(62,207,142,.13); }
+.status-pending, .status.pending { color: #ffd27a; background: rgba(245,166,35,.13); }
+.status-rejected, .status.rejected { color: #ff9494; background: rgba(235,87,87,.13); }
+
+/* Badges & action helpers */
+.badge-type { background: rgba(124,106,240,.12); color: #b7a9ff; padding: .2rem .5rem; border-radius: .4rem; font-size: .78rem; font-weight: 500; display: inline-block; }
+.btn-sm { padding: .3rem .6rem; font-size: .75rem; border-radius: .4rem; }
+.btn-danger { background: #3b1e24; border-color: #642d38; color: #ff9b9b; }
+.btn-danger:hover:not(:disabled) { background: #4a242c; }
+
 /* Mobile sidebar backdrop overlay */
 .sidebar-backdrop { display: none; }
 
