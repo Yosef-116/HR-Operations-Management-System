@@ -1,13 +1,24 @@
-const { Client } = require('pg'); 
+const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
-const client = new Client({ connectionString: 'postgresql://postgres.lxvnqlgtemtubtvycvmc:Graceddb%23116%24@aws-1-eu-central-1.pooler.supabase.com:6543/postgres' }); 
-async function seed() { 
-  await client.connect(); 
-  
+
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error('ERROR: DATABASE_URL environment variable is required.\nSet it in your .env file or pass it directly: DATABASE_URL=... node seed.js');
+  process.exit(1);
+}
+
+const client = new Client({ connectionString });
+
+async function seed() {
+  await client.connect();
+
   // Create Employee
-  const res = await client.query('INSERT INTO org.employee (f_name, l_name, email, employment_status, hire_date) VALUES ($1, $2, $3, $4, CURRENT_DATE) ON CONFLICT (email) DO UPDATE SET f_name=EXCLUDED.f_name RETURNING employee_id', ['Admin', 'User', 'admin', 'Active']); 
-  console.log('Employee seeded:', res.rows); 
-  
+  const res = await client.query(
+    'INSERT INTO org.employee (f_name, l_name, email, employment_status, hire_date) VALUES ($1, $2, $3, $4, CURRENT_DATE) ON CONFLICT (email) DO UPDATE SET f_name=EXCLUDED.f_name RETURNING employee_id',
+    ['Admin', 'User', 'admin', 'Active']
+  );
+  console.log('Employee seeded:', res.rows);
+
   // Create User Account
   const employeeId = res.rows[0].employee_id;
   const passwordHash = await bcrypt.hash('admin123', 10);
@@ -27,6 +38,6 @@ async function seed() {
     console.log('Admin role assigned.');
   }
 
-  await client.end(); 
-} 
+  await client.end();
+}
 seed().catch(console.error);
