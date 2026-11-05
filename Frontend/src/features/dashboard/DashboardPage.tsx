@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { request } from '../../api';
 import { useAuth } from '../../auth';
+import { ActionCenter } from './ActionCenter';
 import { AttendanceWidget } from './AttendanceWidget';
+import { EmployeeSelfServiceHub } from './EmployeeSelfServiceHub';
 
 type Totals = { employees: number; leave: number; expenses: number };
 
@@ -14,7 +16,8 @@ export function DashboardPage() {
     user?.permissions.includes('manage_all') ||
     user?.permissions.includes('manage_org') ||
     user?.permissions.includes('manage_payroll') ||
-    user?.permissions.includes('approve_leave')
+    user?.permissions.includes('approve_leave') ||
+    user?.permissions.includes('approve_expense')
   );
 
   useEffect(() => {
@@ -59,6 +62,13 @@ export function DashboardPage() {
           description="Awaiting finance review"
         />
       </div>
+    )}
+
+    {/* Role-Specific Dashboard Hub */}
+    {isAdminOrManager ? (
+      <ActionCenter />
+    ) : (
+      <EmployeeSelfServiceHub />
     )}
   </>;
 }
