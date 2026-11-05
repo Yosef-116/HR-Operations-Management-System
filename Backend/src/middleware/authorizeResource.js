@@ -38,6 +38,9 @@ const authorizeResource = (action) => (req, res, next) => {
   // records to a user who is allowed to see only their own.
   const selfServiceRules = {
     'org.employee': { view: 'view_self' },
+    'org.employee_phones': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
+    'org.employee_addresses': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
+    'org.emergency_contacts': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
     'payroll.leave_requests': { view: 'request_leave', create: 'request_leave' },
     'payroll.expense_claims': { view: 'submit_expense', create: 'submit_expense' }
   };
