@@ -20,6 +20,7 @@ router.post('/leave-requests/:requestId/reject', requireAnyPermission(['approve_
 router.get('/employees/:employeeId/leave-balance', requireSelfOrAnyPermission(['view_payroll', 'approve_leave', 'manage_payroll', 'manage_org']), workflowController.getLeaveBalance);
 
 router.post('/expense-claims/:claimId/approve', requireAnyPermission(['approve_expense', 'manage_payroll']), workflowController.approveExpenseClaim);
+router.post('/expense-claims/:claimId/reject', requireAnyPermission(['approve_expense', 'manage_payroll']), workflowController.rejectExpenseClaim);
 
 router.post('/assets/:assetId/assign', requireAnyPermission(['manage_org']), workflowController.assignAsset);
 router.post('/asset-assignments/:assignmentId/return', requireAnyPermission(['manage_org']), workflowController.returnAsset);

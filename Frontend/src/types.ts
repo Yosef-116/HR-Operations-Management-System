@@ -88,6 +88,20 @@ export type LeaveRequest = {
   updated_at?: string;
 };
 
+export type ExpenseClaim = {
+  claim_id: number;
+  employee_id: number;
+  payslip_id?: number | null;
+  amount: number | string;
+  category: string;
+  description: string | null;
+  receipt_path?: string | null;
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Paid';
+  submitted_date: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type LeaveBalanceItem = {
   type_id: number;
   type_name: string;

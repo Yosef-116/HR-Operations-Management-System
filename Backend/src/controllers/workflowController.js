@@ -48,6 +48,11 @@ module.exports = {
     await workflowService.approveExpenseClaim(req.params.claimId, { ...req.body, status: req.body.status || 'Approved' }, reqMeta(req))
   )),
 
+  rejectExpenseClaim: asyncHandler(async (req, res) => ok(
+    res,
+    await workflowService.approveExpenseClaim(req.params.claimId, { ...req.body, status: 'Rejected' }, reqMeta(req))
+  )),
+
   assignAsset: asyncHandler(async (req, res) => ok(
     res,
     await workflowService.assignAsset(req.params.assetId, req.body, reqMeta(req)),
