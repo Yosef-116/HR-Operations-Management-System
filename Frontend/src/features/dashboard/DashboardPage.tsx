@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { request } from '../../api';
 import { useAuth } from '../../auth';
+import { AttendanceWidget } from './AttendanceWidget';
 
 type Totals = { employees: number; leave: number; expenses: number };
 
@@ -8,6 +9,13 @@ export function DashboardPage() {
   const { user } = useAuth();
   const [totals, setTotals] = useState<Totals | null>(null);
   const [error, setError] = useState('');
+
+  const isAdminOrManager = Boolean(
+    user?.permissions.includes('manage_all') ||
+    user?.permissions.includes('manage_org') ||
+    user?.permissions.includes('manage_payroll') ||
+    user?.permissions.includes('approve_leave')
+  );
 
   useEffect(() => {
     let active = true;
@@ -23,16 +31,44 @@ export function DashboardPage() {
   }, []);
 
   return <>
-    <section className="welcome"><h2>Hello, {user?.f_name ?? user?.username}</h2><p>Here is the current HR operations overview.</p></section>
-    {error ? <p className="form-error">{error}</p> : <div className="stats-grid">
-      <Stat label="Employees" value={totals?.employees} />
-      <Stat label="Pending leave" value={totals?.leave} />
-      <Stat label="Pending expenses" value={totals?.expenses} />
-    </div>}
-    <section className="card"><h2>Migration status</h2><p>Dashboard and employee management use React. The remaining modules stay available in the legacy dashboard until each feature is migrated and verified.</p></section>
+    <section className="welcome" style={{ marginBottom: '1.25rem' }}>
+      <h2>Hello, {user?.f_name ? `${user.f_name} ${user.l_name ?? ''}`.trim() : user?.username}</h2>
+      <p style={{ margin: '.3rem 0 0' }}>Welcome to your WorkForce portal. Here is today's overview.</p>
+    </section>
+
+    {/* Attendance & Time Tracker Widget */}
+    <AttendanceWidget />
+
+    {error ? (
+      <p className="form-error" role="alert">{error}</p>
+    ) : (
+      <div className="stats-grid">
+        <Stat
+          label={isAdminOrManager ? "Total Employees" : "My Profile Status"}
+          value={isAdminOrManager ? totals?.employees : (user?.roles[0] || 'Active')}
+          description={isAdminOrManager ? "Registered in company" : "Current account status"}
+        />
+        <Stat
+          label={isAdminOrManager ? "Pending Leave Requests" : "My Pending Leaves"}
+          value={totals?.leave}
+          description="Awaiting approval"
+        />
+        <Stat
+          label={isAdminOrManager ? "Pending Expense Claims" : "My Pending Claims"}
+          value={totals?.expenses}
+          description="Awaiting finance review"
+        />
+      </div>
+    )}
   </>;
 }
 
-function Stat({ label, value }: { label: string; value: number | undefined }) {
-  return <article className="stat-card"><span>{label}</span><strong>{value ?? '—'}</strong><small>{value === undefined ? 'Loading…' : 'Current records'}</small></article>;
+function Stat({ label, value, description }: { label: string; value: number | string | undefined; description: string }) {
+  return (
+    <article className="stat-card">
+      <span>{label}</span>
+      <strong>{value ?? '—'}</strong>
+      <small>{value === undefined ? 'Loading…' : description}</small>
+    </article>
+  );
 }

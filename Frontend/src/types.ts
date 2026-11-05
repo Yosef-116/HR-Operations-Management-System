@@ -57,6 +57,19 @@ export type EmployeeAddress = {
   is_primary?: boolean;
 };
 
+export type AttendanceRecord = {
+  attendance_id: number;
+  employee_id: number;
+  date: string;
+  status: string;
+  check_in: string | null;
+  check_out: string | null;
+  total_hours: number | null;
+  location_type: 'Office' | 'Remote' | string;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type LeaveType = {
   type_id: number;
   name: string;

@@ -41,6 +41,7 @@ const authorizeResource = (action) => (req, res, next) => {
     'org.employee_phones': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
     'org.employee_addresses': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
     'org.emergency_contacts': { view: 'view_self', create: 'view_self', edit: 'view_self', delete: 'view_self' },
+    'org.attendance': { view: 'view_self' },
     'payroll.leave_requests': { view: 'request_leave', create: 'request_leave' },
     'payroll.expense_claims': { view: 'submit_expense', create: 'submit_expense' }
   };
