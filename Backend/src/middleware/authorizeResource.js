@@ -26,6 +26,7 @@ const authorizeResource = (action) => (req, res, next) => {
   const referenceViewTables = new Set([
     'payroll.leave_types',
     'payroll.salary_matrix',
+    'org.assets',
     'org.departments',
     'recruitment.job_titles',
     'org.offices'
@@ -46,7 +47,8 @@ const authorizeResource = (action) => (req, res, next) => {
     'payroll.leave_requests': { view: 'request_leave', create: 'request_leave' },
     'payroll.expense_claims': { view: 'submit_expense', create: 'submit_expense' },
     'payroll.payslips': { view: 'view_self' },
-    'payroll.salary_contracts': { view: 'view_self' }
+    'payroll.salary_contracts': { view: 'view_self' },
+    'org.asset_assignments': { view: 'view_self' }
   };
   const selfPermission = selfServiceRules[resource.key] && selfServiceRules[resource.key][action];
   if (selfPermission && employeeId && hasAnyPermission(req.user, [selfPermission])) {

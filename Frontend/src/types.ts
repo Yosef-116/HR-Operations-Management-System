@@ -156,3 +156,25 @@ export type SalaryMatrix = {
   step: number;
   base_salary: number | string;
 };
+
+export type Asset = {
+  asset_id: number;
+  asset_name: string;
+  asset_type: string;
+  serial_number?: string | null;
+  purchase_date?: string | null;
+  condition?: string | null;
+  status: 'Available' | 'Assigned' | 'Maintenance' | 'Retired';
+  is_deleted?: boolean;
+};
+
+export type AssetAssignment = {
+  assignment_id: number;
+  asset_id: number;
+  employee_id: number;
+  assigned_date: string;
+  returned_date?: string | null;
+  condition_on_return?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
