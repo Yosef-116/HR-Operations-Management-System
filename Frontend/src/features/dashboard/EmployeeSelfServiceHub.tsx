@@ -69,6 +69,9 @@ export function EmployeeSelfServiceHub() {
           <Link to="/expenses" className="quick-action-btn">
             🧾 Submit Expense Claim
           </Link>
+          <Link to="/payroll" className="quick-action-btn">
+            💰 My Payslips
+          </Link>
           <Link to="/employees" className="quick-action-btn">
             👥 Browse Directory
           </Link>

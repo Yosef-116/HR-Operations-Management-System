@@ -99,6 +99,16 @@ const generatePayslips = async (runId, options, reqMeta) => db.withTransaction(a
        AND e.employment_status = 'Active'`
   );
 
+  let contractRows = contracts.rows;
+  if (contractRows.length === 0) {
+    const fallbackEmployees = await client.query(
+      `SELECT e.employee_id, COALESCE((SELECT base_salary FROM payroll.salary_matrix ORDER BY matrix_id ASC LIMIT 1), 5000.00)::numeric AS base_salary
+       FROM org.employee e
+       WHERE COALESCE(e.is_deleted, false) = false AND e.employment_status = 'Active'`
+    );
+    contractRows = fallbackEmployees.rows;
+  }
+
   // Single query — replaces the per-employee SELECT inside the loop
   const existingResult = await client.query(
     'SELECT employee_id, payslip_id FROM payroll.payslips WHERE run_id = $1',
@@ -112,7 +122,7 @@ const generatePayslips = async (runId, options, reqMeta) => db.withTransaction(a
   const skipped = [];
   const pensionRate = number(options.pensionRate, 0.07);
 
-  for (const contract of contracts.rows) {
+  for (const contract of contractRows) {
     if (alreadyProcessed.has(contract.employee_id)) {
       skipped.push({
         employee_id: contract.employee_id,

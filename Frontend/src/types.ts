@@ -117,3 +117,42 @@ export type LeaveBalanceResponse = {
   year: number;
   balances: LeaveBalanceItem[];
 };
+
+export type PayrollRun = {
+  run_id: number;
+  run_date: string;
+  status: 'Draft' | 'Approved' | 'Processed';
+  run_by: number | null;
+  approved_by: number | null;
+};
+
+export type Payslip = {
+  payslip_id: number;
+  employee_id: number;
+  run_id: number;
+  gross_salary: number | string;
+  tax_amount: number | string;
+  pension_amount?: number | string | null;
+  net_pay: number | string;
+  created_at?: string;
+};
+
+export type SalaryContract = {
+  contract_id: number;
+  employee_id: number;
+  matrix_id: number;
+  contract_type: string;
+  start_date: string;
+  end_date?: string | null;
+  probation_end_date?: string | null;
+  is_active: boolean;
+  approved_by?: number | null;
+  signed_date?: string | null;
+};
+
+export type SalaryMatrix = {
+  matrix_id: number;
+  level: string;
+  step: number;
+  base_salary: number | string;
+};

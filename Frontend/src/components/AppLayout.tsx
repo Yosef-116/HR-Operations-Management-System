@@ -6,7 +6,7 @@ import { useAuth } from '../auth';
 /*  Declarative, permission-aware navigation model                     */
 /* ------------------------------------------------------------------ */
 
-type NavLinkItem = { to: string; label: string; requiredPermissions?: string[] };
+type NavLinkItem = { to: string; label: string; requiredPermissions?: string[]; excludePermissions?: string[] };
 type NavSection = { section: string; links: NavLinkItem[] };
 
 const navigation: NavSection[] = [
@@ -22,12 +22,13 @@ const navigation: NavSection[] = [
     links: [
       { to: '/leave', label: 'Leave Requests', requiredPermissions: ['request_leave', 'approve_leave', 'manage_payroll', 'manage_all'] },
       { to: '/expenses', label: 'Expense Claims', requiredPermissions: ['submit_expense', 'approve_expense', 'manage_payroll', 'manage_all'] },
+      { to: '/payroll', label: 'My Payslips', requiredPermissions: ['view_self'], excludePermissions: ['manage_payroll', 'process_payroll', 'view_payroll', 'manage_all'] },
     ],
   },
   {
     section: 'Payroll & Finance',
     links: [
-      { to: '/payroll', label: 'Payroll', requiredPermissions: ['manage_payroll', 'process_payroll', 'view_payroll', 'manage_all'] },
+      { to: '/payroll', label: 'Payroll & Runs', requiredPermissions: ['manage_payroll', 'process_payroll', 'view_payroll', 'manage_all'] },
     ],
   },
   {
@@ -48,8 +49,9 @@ const navigation: NavSection[] = [
   },
 ];
 
-/** Returns true when user holds at least one of the required permissions. */
-function hasAccess(userPermissions: string[], required?: string[]): boolean {
+/** Returns true when user holds at least one of the required permissions and none of the excluded permissions. */
+function hasAccess(userPermissions: string[], required?: string[], excluded?: string[]): boolean {
+  if (excluded && excluded.some((p) => userPermissions.includes(p))) return false;
   if (!required || required.length === 0) return true;
   return required.some((p) => userPermissions.includes(p));
 }
@@ -59,7 +61,7 @@ function getVisibleNavigation(permissions: string[]): NavSection[] {
   return navigation
     .map((section) => ({
       ...section,
-      links: section.links.filter((link) => hasAccess(permissions, link.requiredPermissions)),
+      links: section.links.filter((link) => hasAccess(permissions, link.requiredPermissions, link.excludePermissions)),
     }))
     .filter((section) => section.links.length > 0);
 }

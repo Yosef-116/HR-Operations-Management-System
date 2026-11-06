@@ -72,6 +72,68 @@ async function seed() {
   }
   console.log('Leave entitlements verified/seeded.');
 
+  // Seed standard Ethiopian Income Tax Brackets if none exist
+  const existingTax = await client.query('SELECT count(*) FROM payroll.tax_brackets_eth');
+  if (Number(existingTax.rows[0].count) === 0) {
+    const taxBrackets = [
+      { min: 0, max: 600, rate: 0.00, fee: 0.00 },
+      { min: 601, max: 1650, rate: 0.10, fee: 60.00 },
+      { min: 1651, max: 3200, rate: 0.15, fee: 142.50 },
+      { min: 3201, max: 5250, rate: 0.20, fee: 302.50 },
+      { min: 5251, max: 7800, rate: 0.25, fee: 565.00 },
+      { min: 7801, max: 10900, rate: 0.30, fee: 955.00 },
+      { min: 10901, max: null, rate: 0.35, fee: 1500.00 }
+    ];
+    for (const tb of taxBrackets) {
+      await client.query(
+        'INSERT INTO payroll.tax_brackets_eth (min_income, max_income, tax_rate, deductible_fee) VALUES ($1, $2, $3, $4)',
+        [tb.min, tb.max, tb.rate, tb.fee]
+      );
+    }
+    console.log('Standard Ethiopian tax brackets seeded.');
+  }
+
+  // Seed standard salary matrix tiers if none exist
+  const existingMatrix = await client.query('SELECT count(*) FROM payroll.salary_matrix');
+  if (Number(existingMatrix.rows[0].count) === 0) {
+    const salaryLevels = [
+      { level: 'L1', step: 1, base: 12000.00 },
+      { level: 'L2', step: 1, base: 22000.00 },
+      { level: 'L3', step: 1, base: 38000.00 },
+      { level: 'L4', step: 1, base: 60000.00 },
+      { level: 'L5', step: 1, base: 95000.00 }
+    ];
+    for (const sm of salaryLevels) {
+      await client.query(
+        'INSERT INTO payroll.salary_matrix (level, step, base_salary) VALUES ($1, $2, $3)',
+        [sm.level, sm.step, sm.base]
+      );
+    }
+    console.log('Default salary matrix tiers seeded.');
+  }
+
+  // Ensure active employees have an active salary contract
+  const defaultMatrix = await client.query('SELECT matrix_id FROM payroll.salary_matrix ORDER BY matrix_id ASC LIMIT 1');
+  if (defaultMatrix.rows.length > 0) {
+    const matrixId = defaultMatrix.rows[0].matrix_id;
+    const uncontractedEmps = await client.query(
+      `SELECT e.employee_id
+       FROM org.employee e
+       LEFT JOIN payroll.salary_contracts sc ON sc.employee_id = e.employee_id AND sc.is_active = true
+       WHERE sc.contract_id IS NULL AND e.employment_status = 'Active'`
+    );
+    for (const row of uncontractedEmps.rows) {
+      await client.query(
+        `INSERT INTO payroll.salary_contracts (employee_id, matrix_id, contract_type, start_date, is_active)
+         VALUES ($1, $2, 'Permanent', CURRENT_DATE, true)`,
+        [row.employee_id, matrixId]
+      );
+    }
+    if (uncontractedEmps.rows.length > 0) {
+      console.log(`Seeded default salary contracts for ${uncontractedEmps.rows.length} employees.`);
+    }
+  }
+
   await client.end();
 }
 seed().catch(console.error);
