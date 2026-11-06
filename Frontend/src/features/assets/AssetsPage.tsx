@@ -905,3 +905,4 @@ export function AssetsPage() {
     </div>
   );
 }
+
