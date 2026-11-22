@@ -24,6 +24,7 @@ const navigation: NavSection[] = [
       { to: '/expenses', label: 'Expense Claims', requiredPermissions: ['submit_expense', 'approve_expense', 'manage_payroll', 'manage_all'] },
       { to: '/payroll', label: 'My Payslips', requiredPermissions: ['view_self'], excludePermissions: ['manage_payroll', 'process_payroll', 'view_payroll', 'manage_all'] },
       { to: '/assets', label: 'My Equipment', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
+      { to: '/onboarding', label: 'My Onboarding', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
     ],
   },
   {

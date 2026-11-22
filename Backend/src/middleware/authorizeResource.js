@@ -27,6 +27,7 @@ const authorizeResource = (action) => (req, res, next) => {
     'payroll.leave_types',
     'payroll.salary_matrix',
     'org.assets',
+    'org.onboarding_tasks',
     'org.departments',
     'recruitment.job_titles',
     'org.offices'
@@ -48,7 +49,9 @@ const authorizeResource = (action) => (req, res, next) => {
     'payroll.expense_claims': { view: 'submit_expense', create: 'submit_expense' },
     'payroll.payslips': { view: 'view_self' },
     'payroll.salary_contracts': { view: 'view_self' },
-    'org.asset_assignments': { view: 'view_self' }
+    'org.asset_assignments': { view: 'view_self' },
+    'org.onboarding_checklists': { view: 'view_self' },
+    'org.employee_exits': { view: 'view_self' }
   };
   const selfPermission = selfServiceRules[resource.key] && selfServiceRules[resource.key][action];
   if (selfPermission && employeeId && hasAnyPermission(req.user, [selfPermission])) {

@@ -178,3 +178,35 @@ export type AssetAssignment = {
   created_at?: string;
   updated_at?: string | null;
 };
+
+export type OnboardingChecklist = {
+  checklist_id: number;
+  employee_id: number;
+  created_by: number | null;
+  status: 'In_Progress' | 'Completed';
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type OnboardingTask = {
+  task_id: number;
+  checklist_id: number;
+  task_name: string;
+  due_date?: string | null;
+  completed_by?: number | null;
+  status: 'Pending' | 'Done';
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type EmployeeExit = {
+  exit_id: number;
+  employee_id: number;
+  exit_type: string;
+  last_working_day: string;
+  reason?: string | null;
+  clearance_status: string;
+  created_at?: string;
+  updated_at?: string | null;
+};
+

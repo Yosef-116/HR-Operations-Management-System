@@ -75,6 +75,9 @@ export function EmployeeSelfServiceHub() {
           <Link to="/assets" className="quick-action-btn">
             💻 My Equipment
           </Link>
+          <Link to="/onboarding" className="quick-action-btn">
+            📋 My Onboarding
+          </Link>
           <Link to="/employees" className="quick-action-btn">
             👥 Browse Directory
           </Link>

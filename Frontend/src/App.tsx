@@ -8,6 +8,7 @@ import { LeavePage } from './features/leave/LeavePage';
 import { ExpensesPage } from './features/expenses/ExpensesPage';
 import { PayrollPage } from './features/payroll/PayrollPage';
 import { AssetsPage } from './features/assets/AssetsPage';
+import { OnboardingPage } from './features/onboarding/OnboardingPage';
 import { PlaceholderPage } from './components/PlaceholderPage';
 
 function ProtectedApp() {
@@ -23,6 +24,7 @@ function ProtectedApp() {
       <Route path="expenses" element={<ExpensesPage />} />
       <Route path="payroll" element={<PayrollPage />} />
       <Route path="assets" element={<AssetsPage />} />
+      <Route path="onboarding" element={<OnboardingPage />} />
       <Route path=":module" element={<PlaceholderPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
