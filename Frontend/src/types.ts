@@ -210,3 +210,18 @@ export type EmployeeExit = {
   updated_at?: string | null;
 };
 
+export type Grievance = {
+  grievance_id: number;
+  employee_id: number;
+  submitted_date: string;
+  category: string | null;
+  description: string;
+  status: 'Open' | 'Under Review' | 'Investigating' | 'Resolved' | 'Dismissed' | string;
+  resolved_by?: number | null;
+  resolution_date?: string | null;
+  resolution_notes?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+

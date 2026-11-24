@@ -556,6 +556,23 @@ const fileGrievance = async (payload, reqMeta) => db.withTransaction(async (clie
 
 const resolveGrievance = async (grievanceId, payload, reqMeta) => db.withTransaction(async (client) => {
   const oldGrievance = await fetchOne(client, 'SELECT * FROM org.grievances WHERE grievance_id = $1', [grievanceId], 'Grievance not found');
+  const status = payload.status || 'Resolved';
+  const validStatuses = ['Open', 'Under Review', 'Investigating', 'Resolved', 'Dismissed'];
+  if (!validStatuses.includes(status)) {
+    throw new AppError(`Grievance status must be one of: ${validStatuses.join(', ')}`, 400);
+  }
+
+  const isClosed = status === 'Resolved' || status === 'Dismissed';
+  const resolutionDate = isClosed
+    ? (payload.resolution_date || oldGrievance.resolution_date || today())
+    : (payload.resolution_date || null);
+  const resolvedBy = status === 'Open'
+    ? null
+    : (payload.resolved_by || reqMeta.employeeId || oldGrievance.resolved_by || null);
+  const resolutionNotes = payload.resolution_notes !== undefined
+    ? (String(payload.resolution_notes).trim() || null)
+    : oldGrievance.resolution_notes;
+
   const result = await client.query(
     `UPDATE org.grievances
      SET status = $1,
@@ -565,7 +582,7 @@ const resolveGrievance = async (grievanceId, payload, reqMeta) => db.withTransac
          updated_at = now()
      WHERE grievance_id = $5
      RETURNING *`,
-    [payload.status || 'Resolved', payload.resolved_by || reqMeta.employeeId || null, payload.resolution_date || today(), payload.resolution_notes || null, grievanceId]
+    [status, resolvedBy, resolutionDate, resolutionNotes, grievanceId]
   );
 
   await audit(client, reqMeta, 'UPDATE', 'org.grievances', grievanceId, oldGrievance, result.rows[0]);

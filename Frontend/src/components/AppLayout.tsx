@@ -25,6 +25,7 @@ const navigation: NavSection[] = [
       { to: '/payroll', label: 'My Payslips', requiredPermissions: ['view_self'], excludePermissions: ['manage_payroll', 'process_payroll', 'view_payroll', 'manage_all'] },
       { to: '/assets', label: 'My Equipment', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
       { to: '/onboarding', label: 'My Onboarding', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
+      { to: '/grievances', label: 'My Grievances', requiredPermissions: ['view_self'], excludePermissions: ['resolve_grievance', 'manage_org', 'manage_all'] },
     ],
   },
   {
@@ -45,7 +46,7 @@ const navigation: NavSection[] = [
     section: 'Operations',
     links: [
       { to: '/assets', label: 'Assets', requiredPermissions: ['manage_org', 'manage_all'] },
-      { to: '/grievances', label: 'Grievances', requiredPermissions: ['resolve_grievance', 'view_self', 'manage_org', 'manage_all'] },
+      { to: '/grievances', label: 'Grievances', requiredPermissions: ['resolve_grievance', 'manage_org', 'manage_all'] },
       { to: '/onboarding', label: 'Onboarding', requiredPermissions: ['manage_org', 'manage_all'] },
     ],
   },

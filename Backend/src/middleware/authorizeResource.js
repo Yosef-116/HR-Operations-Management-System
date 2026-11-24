@@ -14,7 +14,14 @@ const authorizeResource = (action) => (req, res, next) => {
   if (!resource) return next(new AppError(`Unknown resource: ${req.params.schema}.${req.params.table}`, 404));
 
   req.resource = resource;
-  const required = permissionsFor(action, resource);
+  // Sensitive tables (e.g. confidential HR grievances) must not fall under broad
+  // schema-wide read permissions like `view_org` meant for directories/offices.
+  const restrictedViewPermissions = {
+    'org.grievances': ['resolve_grievance', 'view_grievances', 'view_org.grievances', 'manage_org']
+  };
+  const required = (action === 'view' && restrictedViewPermissions[resource.key])
+    ? restrictedViewPermissions[resource.key]
+    : permissionsFor(action, resource);
   const employeeId = req.user && req.user.employee_id;
 
   // A resource-level permission is broader than self-service access and must
@@ -51,7 +58,8 @@ const authorizeResource = (action) => (req, res, next) => {
     'payroll.salary_contracts': { view: 'view_self' },
     'org.asset_assignments': { view: 'view_self' },
     'org.onboarding_checklists': { view: 'view_self' },
-    'org.employee_exits': { view: 'view_self' }
+    'org.employee_exits': { view: 'view_self' },
+    'org.grievances': { view: 'view_self' }
   };
   const selfPermission = selfServiceRules[resource.key] && selfServiceRules[resource.key][action];
   if (selfPermission && employeeId && hasAnyPermission(req.user, [selfPermission])) {

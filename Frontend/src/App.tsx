@@ -9,6 +9,7 @@ import { ExpensesPage } from './features/expenses/ExpensesPage';
 import { PayrollPage } from './features/payroll/PayrollPage';
 import { AssetsPage } from './features/assets/AssetsPage';
 import { OnboardingPage } from './features/onboarding/OnboardingPage';
+import { GrievancesPage } from './features/grievances/GrievancesPage';
 import { PlaceholderPage } from './components/PlaceholderPage';
 
 function ProtectedApp() {
@@ -25,6 +26,7 @@ function ProtectedApp() {
       <Route path="payroll" element={<PayrollPage />} />
       <Route path="assets" element={<AssetsPage />} />
       <Route path="onboarding" element={<OnboardingPage />} />
+      <Route path="grievances" element={<GrievancesPage />} />
       <Route path=":module" element={<PlaceholderPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
