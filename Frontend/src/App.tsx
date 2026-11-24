@@ -11,6 +11,9 @@ import { AssetsPage } from './features/assets/AssetsPage';
 import { OnboardingPage } from './features/onboarding/OnboardingPage';
 import { GrievancesPage } from './features/grievances/GrievancesPage';
 import { ReportsPage } from './features/reports/ReportsPage';
+import { RecruitmentPage } from './features/recruitment/RecruitmentPage';
+import { PerformancePage } from './features/performance/PerformancePage';
+import { TrainingPage } from './features/training/TrainingPage';
 import { PlaceholderPage } from './components/PlaceholderPage';
 
 function ProtectedApp() {
@@ -29,6 +32,9 @@ function ProtectedApp() {
       <Route path="onboarding" element={<OnboardingPage />} />
       <Route path="grievances" element={<GrievancesPage />} />
       <Route path="reports" element={<ReportsPage />} />
+      <Route path="recruitment" element={<RecruitmentPage />} />
+      <Route path="performance" element={<PerformancePage />} />
+      <Route path="training" element={<TrainingPage />} />
       <Route path=":module" element={<PlaceholderPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

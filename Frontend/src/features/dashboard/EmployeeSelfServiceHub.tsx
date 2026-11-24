@@ -81,6 +81,9 @@ export function EmployeeSelfServiceHub() {
           <Link to="/grievances" className="quick-action-btn">
             ⚖️ My Grievances
           </Link>
+          <Link to="/training" className="quick-action-btn">
+            🎓 My Courses
+          </Link>
           <Link to="/employees" className="quick-action-btn">
             👥 Browse Directory
           </Link>

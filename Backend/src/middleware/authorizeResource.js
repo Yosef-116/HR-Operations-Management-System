@@ -19,9 +19,19 @@ const authorizeResource = (action) => (req, res, next) => {
   const restrictedViewPermissions = {
     'org.grievances': ['resolve_grievance', 'view_grievances', 'view_org.grievances', 'manage_org']
   };
-  const required = (action === 'view' && restrictedViewPermissions[resource.key])
+  const extraActionPermissions = {
+    'performance.performance_plans': { create: ['edit_performance'], edit: ['edit_performance'] },
+    'performance.performance_goals': { create: ['edit_performance'], edit: ['edit_performance'] },
+    'performance.performance_review': { create: ['edit_performance'], edit: ['edit_performance'] },
+    'people.promotions': { view: ['approve_promotion'], create: ['approve_promotion', 'manage_people'], edit: ['approve_promotion'] },
+    'people.promotion_criteria_assessment': { view: ['approve_promotion'] },
+    'people.promotionapproval_log': { view: ['approve_promotion'] }
+  };
+  const baseRequired = (action === 'view' && restrictedViewPermissions[resource.key])
     ? restrictedViewPermissions[resource.key]
     : permissionsFor(action, resource);
+  const extra = (extraActionPermissions[resource.key] && extraActionPermissions[resource.key][action]) || [];
+  const required = [...baseRequired, ...extra];
   const employeeId = req.user && req.user.employee_id;
 
   // A resource-level permission is broader than self-service access and must
@@ -59,7 +69,9 @@ const authorizeResource = (action) => (req, res, next) => {
     'org.asset_assignments': { view: 'view_self' },
     'org.onboarding_checklists': { view: 'view_self' },
     'org.employee_exits': { view: 'view_self' },
-    'org.grievances': { view: 'view_self' }
+    'org.grievances': { view: 'view_self' },
+    'performance.performance_plans': { view: 'view_self' },
+    'training.trainings': { view: 'view_self' }
   };
   const selfPermission = selfServiceRules[resource.key] && selfServiceRules[resource.key][action];
   if (selfPermission && employeeId && hasAnyPermission(req.user, [selfPermission])) {

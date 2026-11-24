@@ -30,7 +30,7 @@ export type Employee = {
 };
 
 export type Department = { dept_id: number; dept_name: string };
-export type JobTitle = { job_id: number; title_name: string };
+export type JobTitle = { job_id: number; title_name: string; exam_type?: string | null; job_row?: number | null };
 export type Office = { office_id: number; location_name: string; city: string | null };
 
 export type EmergencyContact = {
@@ -340,6 +340,151 @@ export type ReportsOverview = {
     by_category: { category: string; count: number; closed_count: number }[];
   } | null;
 };
+
+export type Vacancy = {
+  vacancy_id: number;
+  job_id: number | null;
+  status: 'Open' | 'Filled' | 'Closed' | 'Draft' | string;
+  type?: string | null;
+  no_of_positions?: number | null;
+  posted_date?: string | null;
+  closing_date?: string | null;
+  description?: string | null;
+  is_deleted?: boolean;
+};
+
+export type Candidate = {
+  candidate_id: number;
+  f_name: string;
+  l_name: string;
+  full_name?: string;
+  email?: string | null;
+  vacancy_id?: number | null;
+  source?: string | null;
+  application_date?: string | null;
+  cover_letter_path?: string | null;
+  is_deleted?: boolean;
+  created_at?: string;
+};
+
+export type RecruitmentResult = {
+  result_id: number;
+  candidate_id: number;
+  exam_score?: number | string | null;
+  interview_score?: number | string | null;
+  status: string;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type CandidatePhone = {
+  phone_id: number;
+  candidate_id: number;
+  phone_type: string;
+  phone_number: string;
+  is_primary?: boolean;
+};
+
+export type PerformancePlan = {
+  plan_id: number;
+  employee_id: number;
+  year: number;
+  period_start: string;
+  period_end: string;
+  plan_status: 'Active' | 'In Progress' | 'Closed' | string;
+  created_by?: number | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type PerformanceGoal = {
+  goal_id: number;
+  plan_id: number;
+  goal_title: string;
+  description?: string | null;
+  target_value?: number | string | null;
+  actual_value?: number | string | null;
+  weight?: number | string | null;
+  status: 'Pending' | 'In Progress' | 'Achieved' | 'Missed' | string;
+  eval_date?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type PerformanceReview = {
+  review_id: number;
+  plan_id: number;
+  reviewer_id?: number | null;
+  review_date: string;
+  reality_score?: number | string | null;
+  overall_rating?: number | string | null;
+  approval_status: string;
+  comments?: string | null;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type Promotion = {
+  promotion_id: number;
+  employee_id: number;
+  old_job_id?: number | null;
+  new_job_id?: number | null;
+  old_matrix_id?: number | null;
+  new_matrix_id?: number | null;
+  promotion_type: string;
+  effective_date: string;
+  status: 'Pending' | 'Approved' | 'Rejected' | string;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type PromotionAssessment = {
+  assessment_id: number;
+  promotion_id: number;
+  performance_review?: number | string | null;
+  training_completed?: boolean;
+  attendance_score?: number | string | null;
+  yrs_in_role?: number | string | null;
+  disciplinary_7?: boolean;
+  overall_score?: number | string | null;
+  assessment_date: string;
+  assessed_by?: number | null;
+};
+
+export type PromotionApprovalLog = {
+  log_id: number;
+  promotion_id: number;
+  approver_id?: number | null;
+  action: 'Approved' | 'Rejected' | 'Returned' | string;
+  notes?: string | null;
+  action_date: string;
+};
+
+export type TrainingProgram = {
+  training_id: number;
+  employee_id: number | null;
+  title: string;
+  type?: string | null;
+  provider?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  cost?: number | string | null;
+  location?: string | null;
+  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled' | string;
+  created_at?: string;
+  updated_at?: string | null;
+};
+
+export type TrainingEvaluation = {
+  eval_id: number;
+  training_id: number;
+  score?: number | string | null;
+  certificate_issued?: boolean;
+  certificate_expiry?: string | null;
+  evaluated_by?: number | null;
+  created_at?: string;
+};
+
 
 
 

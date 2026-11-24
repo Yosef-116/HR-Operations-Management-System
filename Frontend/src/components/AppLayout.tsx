@@ -26,6 +26,7 @@ const navigation: NavSection[] = [
       { to: '/assets', label: 'My Equipment', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
       { to: '/onboarding', label: 'My Onboarding', requiredPermissions: ['view_self'], excludePermissions: ['manage_org', 'manage_all'] },
       { to: '/grievances', label: 'My Grievances', requiredPermissions: ['view_self'], excludePermissions: ['resolve_grievance', 'manage_org', 'manage_all'] },
+      { to: '/training', label: 'My Courses', requiredPermissions: ['view_self'], excludePermissions: ['manage_training', 'manage_all'] },
     ],
   },
   {
@@ -37,8 +38,8 @@ const navigation: NavSection[] = [
   {
     section: 'People',
     links: [
-      { to: '/recruitment', label: 'Recruitment', requiredPermissions: ['manage_recruitment', 'manage_all'] },
-      { to: '/performance', label: 'Performance', requiredPermissions: ['view_performance', 'edit_performance', 'manage_performance', 'manage_all'] },
+      { to: '/recruitment', label: 'Recruitment', requiredPermissions: ['manage_recruitment', 'view_recruitment', 'manage_all'] },
+      { to: '/performance', label: 'Performance', requiredPermissions: ['view_performance', 'edit_performance', 'manage_performance', 'approve_promotion', 'manage_people', 'manage_all'] },
       { to: '/training', label: 'Training', requiredPermissions: ['manage_training', 'manage_all'] },
     ],
   },
