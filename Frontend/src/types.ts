@@ -224,4 +224,122 @@ export type Grievance = {
   updated_at?: string | null;
 };
 
+export type DepartmentAnalyticsRow = {
+  dept_id: number;
+  dept_name: string;
+  office_name: string;
+  total_headcount: number;
+  active_headcount: number;
+  monthly_payroll_commitment: number | null;
+};
+
+export type OfficeAnalyticsRow = {
+  office_id: number;
+  location_name: string;
+  city: string;
+  total_headcount: number;
+  active_headcount: number;
+};
+
+export type LeaveReportRow = {
+  type_name: string;
+  is_paid: boolean;
+  total_requests: number;
+  approved_requests: number;
+  pending_requests: number;
+  rejected_requests: number;
+  approved_days: number;
+};
+
+export type AssetReportRow = {
+  asset_type: string;
+  total_count: number;
+  assigned_count: number;
+  available_count: number;
+  maintenance_count: number;
+  retired_count: number;
+};
+
+export type PayrollRunReportRow = {
+  run_id: number;
+  run_date: string;
+  status: string;
+  payslip_count: number;
+  total_gross: number;
+  total_tax: number;
+  total_pension: number;
+  total_net: number;
+};
+
+export type ExpenseReportRow = {
+  category: string;
+  claim_count: number;
+  total_amount: number;
+  approved_amount: number;
+  pending_amount: number;
+};
+
+export type ReportsOverview = {
+  filters: { start_date: string | null; end_date: string | null };
+  access: { includePayroll: boolean; includeGrievances: boolean };
+  workforce: {
+    total_employees: number;
+    active_employees: number;
+    on_leave_employees: number;
+    exited_employees: number;
+    new_hires: number;
+    attrition_rate: number;
+    demographics: { label: string; count: number }[];
+    departments: DepartmentAnalyticsRow[];
+    offices: OfficeAnalyticsRow[];
+  };
+  lifecycle: {
+    exits: {
+      total_exits: number;
+      cleared_exits: number;
+      pending_clearance: number;
+      by_type: { exit_type: string; count: number }[];
+    };
+    onboarding: {
+      total_checklists: number;
+      in_progress_checklists: number;
+      completed_checklists: number;
+      total_tasks: number;
+      completed_tasks: number;
+      task_completion_rate: number;
+    };
+  };
+  leave_and_attendance: {
+    by_type: LeaveReportRow[];
+    attendance_logs: number;
+    avg_daily_hours: number;
+    approved_overtime_hours: number;
+  };
+  assets: {
+    by_type: AssetReportRow[];
+  };
+  payroll: {
+    summary: {
+      total_runs: number;
+      finalized_runs: number;
+      payslip_count: number;
+      total_gross: number;
+      total_tax: number;
+      total_pension: number;
+      total_net: number;
+      avg_net_pay: number;
+    };
+    runs: PayrollRunReportRow[];
+    expenses_by_category: ExpenseReportRow[];
+  } | null;
+  grievances: {
+    total_cases: number;
+    open_cases: number;
+    active_cases: number;
+    closed_cases: number;
+    by_category: { category: string; count: number; closed_count: number }[];
+  } | null;
+};
+
+
 

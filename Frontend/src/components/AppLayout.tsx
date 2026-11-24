@@ -50,6 +50,12 @@ const navigation: NavSection[] = [
       { to: '/onboarding', label: 'Onboarding', requiredPermissions: ['manage_org', 'manage_all'] },
     ],
   },
+  {
+    section: 'Analytics',
+    links: [
+      { to: '/reports', label: 'Reports & Analytics', requiredPermissions: ['view_reports', 'view_org', 'view_payroll', 'manage_payroll', 'process_payroll', 'manage_org', 'manage_all'] },
+    ],
+  },
 ];
 
 /** Returns true when user holds at least one of the required permissions and none of the excluded permissions. */

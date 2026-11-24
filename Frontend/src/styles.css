@@ -143,13 +143,39 @@ label { display: grid; gap: .4rem; color: #c8c8d0; font-size: .85rem; } input, s
 .alert-error { background: #3b1e24; border: 1px solid #642d38; color: #ff9b9b; }
 .alert-success { background: rgba(62,207,142,.12); border: 1px solid rgba(62,207,142,.25); color: #8fe3b6; }
 
-/* Printable payslip styling */
+/* Analytics & Reports visualizations */
+.report-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+@media (max-width: 960px) { .report-grid-2 { grid-template-columns: 1fr; } }
+.bar-list { display: grid; gap: .85rem; }
+.bar-row { display: grid; gap: .35rem; }
+.bar-meta { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; font-size: .86rem; color: #e2e2ec; }
+.bar-meta small { color: #9898a8; }
+.bar-track { width: 100%; height: 9px; border-radius: 999px; background: #23232c; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #7c6af0, #aa99ff); transition: width .35s ease; }
+
+/* Printable payslip & executive report styling */
 @media print {
-  body * { visibility: hidden; }
-  .payslip-modal-container, .payslip-modal-container * { visibility: visible; }
-  .payslip-modal-container { position: absolute; left: 0; top: 0; width: 100% !important; background: white !important; color: black !important; border: none !important; box-shadow: none !important; }
-  .printable-payslip { color: black !important; background: white !important; }
-  .printable-payslip * { color: black !important; background: transparent !important; border-color: #ccc !important; }
-  .modal-backdrop { background: transparent !important; }
-  .eyebrow, button { display: none !important; }
+  body:not(.printing-report) * { visibility: hidden; }
+  body:not(.printing-report) .payslip-modal-container,
+  body:not(.printing-report) .payslip-modal-container * { visibility: visible; }
+  body:not(.printing-report) .payslip-modal-container { position: absolute; left: 0; top: 0; width: 100% !important; background: white !important; color: black !important; border: none !important; box-shadow: none !important; }
+  body:not(.printing-report) .printable-payslip { color: black !important; background: white !important; }
+  body:not(.printing-report) .printable-payslip * { color: black !important; background: transparent !important; border-color: #ccc !important; }
+  body:not(.printing-report) .modal-backdrop { background: transparent !important; }
+  body:not(.printing-report) .eyebrow,
+  body:not(.printing-report) button { display: none !important; }
+
+  body.printing-report { background: white !important; color: #111 !important; }
+  body.printing-report .app-shell { display: block !important; }
+  body.printing-report .sidebar,
+  body.printing-report .main-content > header,
+  body.printing-report .no-print { display: none !important; }
+  body.printing-report .page-content { max-width: 100% !important; padding: 0 !important; }
+  body.printing-report .card,
+  body.printing-report .stat-card { background: white !important; color: #111 !important; border-color: #d4d4dc !important; break-inside: avoid; }
+  body.printing-report h1, body.printing-report h2, body.printing-report h3,
+  body.printing-report strong, body.printing-report th, body.printing-report td,
+  body.printing-report span, body.printing-report p, body.printing-report small { color: #111 !important; }
+  body.printing-report .bar-track { background: #e5e7eb !important; border: 1px solid #cbd5e1 !important; }
+  body.printing-report .bar-fill { background: #4f46e5 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
